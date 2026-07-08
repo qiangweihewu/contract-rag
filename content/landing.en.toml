@@ -1,0 +1,103 @@
+# Structured copy for the English product landing page (contractrag.com/).
+# Every number below is a {{ token }} resolved at build time from
+# content/*.toml static tokens (content/landing_results.toml,
+# content/kleister_results.toml) -- never hand-copied. The hero chips use the
+# CUAD dirty->clean static tokens (real contracts, simulated dirt), NOT the
+# live synthetic-NDA benchmark_tokens(), so the landing page renders fully
+# even with benchmark=None. Edit copy here; never touch builder.py for wording.
+
+title = "contract-rag — sourced, verified extraction for dirty contract PDFs"
+description = "Dirty contract PDFs make RAG return garbage. contract-rag cleans, scores, and extracts sourced, confidence-tiered facts -- measured on public datasets, not synthetic demos."
+lang = "en"
+
+headline = "Your contract RAG returns garbage. Here is the fix, measured."
+subhead = "contract-rag parses, cleans, and scores dirty contract PDFs, then extracts sourced, confidence-tiered facts you can cite by block. Every number on this page is reproducible from the public repo -- simulated inputs are labeled as such."
+cta_text = "Send us your dirtiest contract"
+cta_suffix = "PoC report in 48h"
+cta_email = "hello@contractrag.com"
+
+proof_field_f1 = "dirty→clean field-F1 {{ cuad_dirty_f1 }} → {{ cuad_clean_f1 }}"
+proof_quality = "quality score {{ cuad_dirty_quality }} → {{ cuad_clean_quality }}"
+proof_caption = "40 real CUAD contracts, simulated dirt (seeded corruption suite)"
+
+pillars_heading = "What it does"
+evidence_heading = "Measured on public datasets"
+negatives_heading = "We publish negative results"
+faq_heading = "FAQ"
+
+github_url = "https://github.com/qiangweihewu/contract-rag"
+research_label = "Research"
+footer_project_label = "Project"
+footer_language_label = "Language"
+lang_switch_label = "中文"
+tagline = "contract-rag — open-source, reproducible, credential-free evals on public datasets."
+
+[[pillars]]
+title = "Parse router, including real scans"
+body = "Text-coverage probing routes each document (docling / VLM / paddleOCR); per-page routing catches mixed digital+scanned contracts a whole-document router misses -- measured: {{ edith_misroute_docs }} of mixed EDiTh documents misroute at least one page under single-route parsing."
+
+[[pillars]]
+title = "Explainable quality score + HITL"
+body = "A weighted, explainable score (garble, table integrity, empty blocks, OCR confidence) flags what needs human review -- and we tell you where it can't see: confidence can't flag omissions, because an omitted fact produces no block at all, not a low-confidence one. We measured that gap and built a geometric coverage signal for it."
+
+[[pillars]]
+title = "Sourced extraction, verified, CLM-ready"
+body = "Every extracted value is a literal span of its cited source block -- attribution holds by construction. verify() quarantines low-confidence or unattributed fields for review, and the same facts export straight to CSV/JSON with a best-effort Salesforce/Ironclad field mapping."
+
+[[evidence]]
+label = "CUAD (40 real contracts)"
+value = "rule extractor field-F1 {{ cuad_rule_f1 }} (95% CI {{ cuad_rule_f1_ci }}), source-accuracy {{ cuad_rule_source_acc }}; local schema-constrained decoding (qwen2.5-32B) {{ cuad_constrained_f1 }} with {{ cuad_constrained_schema_fail }} schema failures, vs {{ cuad_tools_schema_fail }} under standard TOOLS-mode function calling. Simulated dirt lift: field-F1 {{ cuad_dirty_f1 }} → {{ cuad_clean_f1 }}, quality {{ cuad_dirty_quality }} → {{ cuad_clean_quality }}."
+link = "benchmark.html"
+
+[[evidence]]
+label = "Kleister-NDA (40 real SEC EDGAR NDAs)"
+value = "rule extractor field-F1 {{ kleister_f1_initial }} → {{ kleister_f1_improved }} after two rounds of targeted fixes, source-accuracy {{ kleister_source_acc }} -- the honest gap against a synthetic 0.98 golden set."
+link = "kleister-nda.html"
+
+[[evidence]]
+label = "Tobacco800 (100 real scanned pages)"
+value = "signature-presence detector: precision {{ tobacco800_signature_precision }}, recall {{ tobacco800_signature_recall }}, F1 {{ tobacco800_signature_f1 }} -- flags {{ tobacco800_unsigned_flagged }} unsigned documents that a naive always-signed baseline finds none of."
+link = ""
+
+[[evidence]]
+label = "FinCriticalED (85 real degraded SEC pages)"
+value = "{{ fincritical_omission_rate }} of {{ fincritical_n_facts }} expert-labeled facts are absent from OCR output entirely, while the doc-level quality score still reads {{ fincritical_quality_at_omission }} -- the blind spot a confidence threshold cannot catch."
+link = ""
+
+[[evidence]]
+label = "EDiTh (86 real mixed-format documents)"
+value = "{{ edith_misroute_docs }} of mixed digital+scanned documents misroute at least one page ({{ edith_misroute_pages }} pages) under whole-document routing -- the measurement that justified building per-page routing."
+link = ""
+
+[[negatives]]
+text = "We reproduced DAPEI-style definition injection for retrieval: zero lift through hybrid under both a hashing embedder (hybrid {{ dapei_hybrid_hashing }} → {{ dapei_hybrid_hashing }}, flat) and a semantic embedder (dense-only injection cell-for-cell identical to baseline, hybrid {{ dapei_hybrid_semantic }} → {{ dapei_hybrid_semantic }}); full injection actually hurt BM25 ({{ dapei_bm25_before }} → {{ dapei_bm25_after }}) and dragged semantic hybrid to {{ dapei_hybrid_semantic_full_inject }}. We shipped the instrumentation, not the technique."
+
+[[negatives]]
+text = "We spiked an alternative local OCR engine (FrankenOCR): parity field-F1, {{ frankenocr_slowdown }} slower, and it hallucinates text on shredded scans. Not adopted."
+
+[[negatives]]
+text = "Our own quality score has a blind spot: on FinCriticalED, {{ fincritical_omission_rate }} of expert facts vanish from OCR output while the score still reads {{ fincritical_quality_at_omission }}. OCR confidence can't flag it either -- an omitted fact produces no block at all, not a low-confidence one. That gap is why we measure it in the open instead of hiding it."
+
+[[faq]]
+q = "Why does a dirty contract PDF break RAG retrieval and extraction?"
+a = "Mojibake, mid-word hyphenation, repeated page headers, and near-duplicate blocks poison chunk retrieval and confuse structured extraction -- the model retrieves noise and cites the wrong span. Cleaning to a typed Document IR before indexing or extracting fixes the root cause instead of papering over it with a bigger model."
+
+[[faq]]
+q = "How accurate is extraction on real contracts, not a synthetic demo?"
+a = "On the public CUAD benchmark (40 real contracts) the deterministic rule extractor reaches field-F1 {{ cuad_rule_f1 }} (95% CI {{ cuad_rule_f1_ci }}) with source-accuracy {{ cuad_rule_source_acc }}. On real SEC EDGAR NDAs (Kleister-NDA) the same approach reaches {{ kleister_f1_improved }}, versus {{ synthetic_nda_f1 }} on our own synthetic golden set -- the gap between synthetic and real-document numbers, published rather than hidden."
+
+[[faq]]
+q = "Does this handle scanned and mixed digital/scanned contracts?"
+a = "Yes. A text-coverage probe routes each page to the right parser (native-digital vs OCR), which matters: {{ edith_misroute_docs }} of real mixed digital+scanned documents misroute at least one page under whole-document routing, which is why routing is per-page, not per-document. Scanned-page signature detection is also built and measured (Tobacco800: F1 {{ tobacco800_signature_f1 }})."
+
+[[faq]]
+q = "What does 'sourced and verified' actually mean?"
+a = "Every extracted value is required to be a literal span of the block it cites (source_block_id) -- attribution holds by construction, not by prompting. A verify() guard quarantines low-confidence or unattributed fields for human review instead of shipping a silently wrong answer."
+
+[[faq]]
+q = "Can extracted facts flow into our CLM (Salesforce, Ironclad)?"
+a = "Yes -- a CSV/JSON export carries doc_id, field name, value, source_block_id, confidence, risk tier, and a verified flag, with a best-effort Salesforce/Ironclad field-name mapping for import convenience (not an official schema)."
+
+[[faq]]
+q = "Why do you publish negative results instead of just the wins?"
+a = "Because a vendor that only shows you the numbers that worked is asking you to trust marketing, not evidence. We measured DAPEI-style definition injection and it didn't help; we spiked an alternative OCR engine and didn't adopt it; we measured our own quality score's blind spot to OCR omissions. All three are on this page, next to the results that did work."

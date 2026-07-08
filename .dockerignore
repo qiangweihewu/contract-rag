@@ -1,0 +1,14 @@
+.git
+.github
+data
+golden_set
+cuad
+.ir_cache
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+tests
+docs
+*.report.html
+traces.jsonl

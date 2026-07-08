@@ -1,0 +1,102 @@
+# 中文版产品落地页结构化文案（contractrag.com/zh/）。页面上出现的每一个数字都是
+# 构建期解析的 {{ token }}，来自 content/*.toml 静态 token
+# （content/landing_results.toml、content/kleister_results.toml）——绝不手工誊抄。
+# 首屏证明徽章使用 CUAD 脏→净静态 token（真实合同、模拟脏数据），不依赖实时
+# benchmark_tokens()，因此 benchmark=None 时落地页也能完整渲染。
+# 改文案只改这里，不改 builder.py。
+
+title = "contract-rag —— 面向脏合同 PDF 的可溯源、可验证抽取"
+description = "脏合同 PDF 会让 RAG 检索出一堆垃圾。contract-rag 负责清洗、打分、抽取，产出可按块溯源、带置信度分级的事实——数字全部来自公开数据集测量，不是合成 demo。"
+lang = "zh"
+
+headline = "你的合同 RAG 检索出来的全是乱码。这是一个可衡量的修复方案。"
+subhead = "contract-rag 解析、清洗并为脏合同 PDF 打分，再抽取可按文本块溯源、带置信度分级的事实。这个页面上的每一个数字都能从开源仓库复现——凡是模拟输入，我们都会如实标注。"
+cta_text = "把你最脏的一份合同发给我们"
+cta_suffix = "48 小时内交付 PoC 报告"
+cta_email = "hello@contractrag.com"
+
+proof_field_f1 = "脏→净字段 F1 {{ cuad_dirty_f1 }} → {{ cuad_clean_f1 }}"
+proof_quality = "质量评分 {{ cuad_dirty_quality }} → {{ cuad_clean_quality }}"
+proof_caption = "40 篇真实 CUAD 合同、模拟脏数据（带种子的破坏套件）"
+
+pillars_heading = "它做什么"
+evidence_heading = "在公开数据集上的实测"
+negatives_heading = "我们发布负面结果"
+faq_heading = "常见问题"
+
+github_url = "https://github.com/qiangweihewu/contract-rag"
+research_label = "研究"
+footer_project_label = "项目"
+footer_language_label = "语言"
+lang_switch_label = "EN"
+tagline = "contract-rag —— 开源、可复现、无需凭据的公开数据集评测。"
+
+[[pillars]]
+title = "解析路由，覆盖真实扫描件"
+body = "按文本覆盖率探测每份文档并路由到合适的解析器（docling / VLM / paddleOCR）；按页路由能识别整份文档级路由会漏掉的\"数字件+扫描件\"混合合同——实测：EDiTh 混合文档中有 {{ edith_misroute_docs }} 会有至少一页路由错误（整份路由时）。"
+
+[[pillars]]
+title = "可解释的质量评分 + 人工复核"
+body = "一个可解释的加权评分（乱码、表格完整性、空白块、OCR 置信度）会标出需要人工复核的内容——我们也如实说明它看不到什么：置信度无法标记遗漏，因为被遗漏的事实根本不会产生任何文本块，而不是一个低置信度的块。我们已经测量过这个盲区，并为此构建了一个基于几何墨迹覆盖率的信号。"
+
+[[pillars]]
+title = "可溯源抽取，经过验证，可直接对接 CLM"
+body = "每一个抽取出的值，都必须是其引用源文本块的原文片段——溯源关系由结构保证，而非靠提示词承诺。verify() 会把低置信度或无法溯源的字段挂起待人工复核，同一批事实还能导出为 CSV/JSON，并提供 Salesforce/Ironclad 的字段名最佳对齐映射。"
+
+[[evidence]]
+label = "CUAD（40 篇真实合同）"
+value = "规则抽取器字段 F1 {{ cuad_rule_f1 }}（95% 置信区间 {{ cuad_rule_f1_ci }}），溯源准确率 {{ cuad_rule_source_acc }}；本地结构化约束解码（qwen2.5-32B）{{ cuad_constrained_f1 }}，schema 失败 {{ cuad_constrained_schema_fail }}，对比标准 TOOLS 模式函数调用的 {{ cuad_tools_schema_fail }}。模拟脏数据提升：字段 F1 {{ cuad_dirty_f1 }} → {{ cuad_clean_f1 }}，质量分 {{ cuad_dirty_quality }} → {{ cuad_clean_quality }}。"
+link = "benchmark.zh.html"
+
+[[evidence]]
+label = "Kleister-NDA（40 份真实 SEC EDGAR NDA）"
+value = "规则抽取器字段 F1 经过两轮针对性修复后从 {{ kleister_f1_initial }} 提升到 {{ kleister_f1_improved }}，溯源准确率 {{ kleister_source_acc }}——这也是与合成金标集 0.98 分数之间那道诚实的差距。"
+link = "kleister-nda.zh.html"
+
+[[evidence]]
+label = "Tobacco800（100 页真实扫描件）"
+value = "签名存在性检测器：精确率 {{ tobacco800_signature_precision }}，召回率 {{ tobacco800_signature_recall }}，F1 {{ tobacco800_signature_f1 }}——能标记出 {{ tobacco800_unsigned_flagged }} 份未签署文档，而朴素的\"默认已签署\"基线一份也找不到。"
+link = ""
+
+[[evidence]]
+label = "FinCriticalED（85 页真实降质 SEC 文件）"
+value = "{{ fincritical_n_facts }} 条专家标注事实中有 {{ fincritical_omission_rate }} 在 OCR 输出里完全消失，而文档级质量评分依然显示 {{ fincritical_quality_at_omission }}——这是一个置信度阈值无法捕捉的盲区。"
+link = ""
+
+[[evidence]]
+label = "EDiTh（86 份真实混合格式文档）"
+value = "整份文档级路由下，{{ edith_misroute_docs }} 的数字件+扫描件混合文档至少有一页路由错误（共 {{ edith_misroute_pages }} 页）——正是这个测量结果促使我们构建了按页路由。"
+link = ""
+
+[[negatives]]
+text = "我们复现了 DAPEI 风格的\"定义注入\"检索增强手法：在哈希与语义两种向量模型下，混合检索均无任何提升（哈希模型 hybrid {{ dapei_hybrid_hashing }} → {{ dapei_hybrid_hashing }}，持平；语义模型下仅注入稠密侧的结果与基线逐项完全一致，hybrid {{ dapei_hybrid_semantic }} → {{ dapei_hybrid_semantic }}）；全量注入反而拖累 BM25（{{ dapei_bm25_before }} → {{ dapei_bm25_after }}），并把语义模型的 hybrid 拉低到 {{ dapei_hybrid_semantic_full_inject }}。我们保留了用于分析的埋点，但没有采用这项技术。"
+
+[[negatives]]
+text = "我们试验过一个替代的本地 OCR 引擎（FrankenOCR）：字段 F1 打平，速度却慢了 {{ frankenocr_slowdown }}，而且在被切碎的扫描件上会产生幻觉文本。最终未采用。"
+
+[[negatives]]
+text = "我们自己的质量评分也有盲区：在 FinCriticalED 上，{{ fincritical_omission_rate }} 的专家标注事实从 OCR 输出中消失，而评分依然显示 {{ fincritical_quality_at_omission }}。OCR 置信度同样无法标记它——被遗漏的事实根本不产生任何文本块，而不是一个低置信度的块。我们选择把这个差距公开测量，而不是藏起来。"
+
+[[faq]]
+q = "为什么脏合同 PDF 会破坏 RAG 检索和抽取？"
+a = "乱码（Mojibake）、单词中间被换行拆开、每页重复的页眉，以及近似重复的文本块，都会同时污染分块检索并干扰结构化抽取——模型检索到的是噪声，引用的也是错误片段。在建索引或抽取之前，先清洗成一个有类型的文档 IR，是从根源解决问题，而不是靠更大的模型硬扛。"
+
+[[faq]]
+q = "在真实合同上（而不是合成 demo 上）抽取准确率如何？"
+a = "在公开的 CUAD 基准（40 份真实合同）上，确定性规则抽取器字段 F1 达到 {{ cuad_rule_f1 }}（95% 置信区间 {{ cuad_rule_f1_ci }}），溯源准确率 {{ cuad_rule_source_acc }}。在真实的 SEC EDGAR NDA（Kleister-NDA）上，同一套方法达到 {{ kleister_f1_improved }}，而我们自己的合成金标集分数是 {{ synthetic_nda_f1 }}——这个合成与真实数据之间的差距，我们选择公开发布，而不是隐藏。"
+
+[[faq]]
+q = "能处理扫描件、以及数字件+扫描件混合的合同吗？"
+a = "可以。文本覆盖率探测会为每一页路由到合适的解析器（原生数字文本 vs OCR）——这一点很重要：{{ edith_misroute_docs }} 的真实混合文档在整份文档级路由下至少有一页会路由错误，这正是我们把路由做到按页而非按文档粒度的原因。扫描件的签名检测同样已经构建并测量（Tobacco800：F1 {{ tobacco800_signature_f1 }}）。"
+
+[[faq]]
+q = "\"可溯源、经过验证\"具体是什么意思？"
+a = "每一个抽取出的值都必须是其引用文本块（source_block_id）的原文片段——溯源关系由结构强制保证，而不是靠提示词承诺。verify() 守卫会把低置信度或无法溯源的字段挂起，转交人工复核，而不是悄悄给出一个可能错误的答案。"
+
+[[faq]]
+q = "抽取出的事实能对接进我们的 CLM（Salesforce、Ironclad）吗？"
+a = "可以——CSV/JSON 导出会携带 doc_id、字段名、值、source_block_id、置信度、风险分级，以及一个 verified 标记，并提供 Salesforce/Ironclad 的字段名最佳对齐映射（供导入参考，并非官方 schema）。"
+
+[[faq]]
+q = "为什么要公开负面结果，而不是只展示成功的那部分？"
+a = "因为只展示成功数字的供应商，是在要求你相信营销话术，而不是证据。我们测量过 DAPEI 风格的定义注入，结果没有帮助；我们试验过一个替代 OCR 引擎，最终没有采用；我们测量过自己的质量评分对 OCR 遗漏的盲区。这三项负面结果都和其他有效的结果并列展示在这个页面上。"

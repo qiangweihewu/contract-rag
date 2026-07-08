@@ -1,0 +1,15 @@
+MUTUAL NON-DISCLOSURE AGREEMENT
+
+This Non-Disclosure Agreement is entered into by and between Acme Robotics Inc. ("Disclosing Party") and Beilan Systems LLC ("Receiving Party").
+
+This Agreement is effective as of March 3, 2025.
+
+The Receiving Party shall use the Confidential Information solely for the purpose of evaluating a potential business relationship.
+
+This Agreement shall remain in full force and effect for two (2) years from the Effective Date.
+
+The obligations of confidentiality shall survive for five (5) years following any termination of this Agreement.
+
+Upon termination, the Receiving Party shall return or destroy all Confidential Information in its possession.
+
+This Agreement shall be governed by the laws of the State of New York.

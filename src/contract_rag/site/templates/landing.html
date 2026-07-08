@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${title}</title>
+<meta name="description" content="${description}">
+<link rel="canonical" href="${canonical}">
+${hreflang}
+<script type="application/ld+json">${jsonld}</script>
+<style>
+  :root {
+    --accent: #1a7f5e;
+    --bg: #ffffff;
+    --bg-alt: #f6f8f7;
+    --fg: #16201c;
+    --fg-muted: #4a5750;
+    --border: #dfe6e2;
+    --code-bg: #eef2f0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --accent: #3ddc97;
+      --bg: #101613;
+      --bg-alt: #161e1a;
+      --fg: #e7ede9;
+      --fg-muted: #a7b3ac;
+      --border: #2a3630;
+      --code-bg: #1c2621;
+    }
+  }
+  :root[data-theme="dark"] {
+    --accent: #3ddc97; --bg: #101613; --bg-alt: #161e1a; --fg: #e7ede9;
+    --fg-muted: #a7b3ac; --border: #2a3630; --code-bg: #1c2621;
+  }
+  :root[data-theme="light"] {
+    --accent: #1a7f5e; --bg: #ffffff; --bg-alt: #f6f8f7; --fg: #16201c;
+    --fg-muted: #4a5750; --border: #dfe6e2; --code-bg: #eef2f0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 1rem/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  .container { max-width: 64rem; margin: 0 auto; padding: 0 1.25rem; }
+  header.site { border-bottom: 1px solid var(--border); }
+  header.site .bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 0;
+  }
+  .brand { font-weight: 700; letter-spacing: -.01em; color: var(--fg); text-decoration: none; }
+  nav.top a { color: var(--fg-muted); text-decoration: none; margin-left: 1.25rem; font-size: .9rem; }
+  nav.top a:hover { color: var(--accent); }
+  section.hero { padding: 4rem 0 3rem; }
+  section.hero h1 { font-size: clamp(1.9rem, 4vw, 2.75rem); line-height: 1.15; margin: 0 0 1rem; letter-spacing: -.02em; }
+  section.hero p.subhead { font-size: 1.15rem; color: var(--fg-muted); max-width: 42rem; margin: 0 0 1.75rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: 2rem; }
+  .chip {
+    display: inline-block; border: 1px solid var(--border); background: var(--bg-alt);
+    color: var(--fg); padding: .5rem .9rem; border-radius: 999px; font-size: .9rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .chip-caption { margin: -1.25rem 0 2rem; color: var(--fg-muted); font-size: .82rem; }
+  .cta {
+    display: inline-block; background: var(--accent); color: #fff; text-decoration: none;
+    font-weight: 600; padding: .85rem 1.4rem; border-radius: .5rem; font-size: 1rem;
+  }
+  .cta:hover { opacity: .92; }
+  section.pillars { padding: 2rem 0 3rem; border-top: 1px solid var(--border); }
+  h2 { font-size: 1.5rem; letter-spacing: -.01em; margin: 0 0 1.5rem; }
+  .pillar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+  .pillar {
+    border: 1px solid var(--border); border-radius: .6rem; padding: 1.25rem;
+    background: var(--bg-alt);
+  }
+  .pillar h3 { margin: 0 0 .5rem; font-size: 1.05rem; }
+  .pillar p { margin: 0; color: var(--fg-muted); font-size: .95rem; }
+  section.evidence { padding: 2rem 0 3rem; border-top: 1px solid var(--border); }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: .5rem; }
+  table.evidence-table { width: 100%; border-collapse: collapse; font-size: .92rem; min-width: 32rem; }
+  table.evidence-table td { padding: .75rem 1rem; border-top: 1px solid var(--border); vertical-align: top; }
+  table.evidence-table tr:first-child td { border-top: none; }
+  table.evidence-table td:first-child { font-weight: 600; white-space: nowrap; }
+  table.evidence-table a { color: var(--accent); }
+  section.negatives { padding: 2rem 0 3rem; border-top: 1px solid var(--border); }
+  section.negatives .box {
+    border: 1px dashed var(--border); border-radius: .6rem; padding: 1.25rem 1.5rem;
+    background: var(--bg-alt);
+  }
+  section.negatives ul { margin: 0; padding-left: 1.1rem; color: var(--fg-muted); }
+  section.negatives li { margin-bottom: .5rem; }
+  section.faq { padding: 2rem 0 3rem; border-top: 1px solid var(--border); }
+  details {
+    border: 1px solid var(--border); border-radius: .5rem; padding: .75rem 1rem; margin-bottom: .6rem;
+    background: var(--bg-alt);
+  }
+  details summary { cursor: pointer; font-weight: 600; }
+  details p { margin: .6rem 0 0; color: var(--fg-muted); }
+  footer.site { border-top: 1px solid var(--border); padding: 2rem 0 3rem; margin-top: 1rem; }
+  footer.site .cols { display: flex; flex-wrap: wrap; gap: 2rem; justify-content: space-between; }
+  footer.site h4 { margin: 0 0 .6rem; font-size: .85rem; text-transform: uppercase; letter-spacing: .05em; color: var(--fg-muted); }
+  footer.site ul { list-style: none; margin: 0; padding: 0; }
+  footer.site li { margin-bottom: .4rem; }
+  footer.site a { color: var(--fg); text-decoration: none; font-size: .92rem; }
+  footer.site a:hover { color: var(--accent); }
+  footer.site .fine { margin-top: 2rem; color: var(--fg-muted); font-size: .8rem; }
+  @media (max-width: 42rem) {
+    .pillar-grid { grid-template-columns: 1fr; }
+    section.hero { padding: 2.5rem 0 2rem; }
+    nav.top a { margin-left: .8rem; }
+  }
+</style>
+</head>
+<body>
+<header class="site">
+  <div class="container bar">
+    <a class="brand" href="${canonical}">contract-rag</a>
+    <nav class="top">
+      <a href="#evidence">${evidence_heading}</a>
+      <a href="${lang_switch_href}">${lang_switch_label}</a>
+      <a href="${github_url}">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container">
+    <h1>${headline}</h1>
+    <p class="subhead">${subhead}</p>
+    <div class="chips">
+      <span class="chip">${proof_field_f1}</span>
+      <span class="chip">${proof_quality}</span>
+    </div>
+    <p class="chip-caption">${proof_caption}</p>
+    <a class="cta" href="${cta_mailto}">${cta_text} &mdash; ${cta_suffix}</a>
+  </div>
+</section>
+
+<section class="pillars">
+  <div class="container">
+    <h2>${pillars_heading}</h2>
+    <div class="pillar-grid">
+      ${pillars_html}
+    </div>
+  </div>
+</section>
+
+<section class="evidence" id="evidence">
+  <div class="container">
+    <h2>${evidence_heading}</h2>
+    <div class="table-wrap">
+      <table class="evidence-table">
+        ${evidence_html}
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="negatives">
+  <div class="container">
+    <h2>${negatives_heading}</h2>
+    <div class="box">
+      <ul>
+        ${negatives_html}
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="faq">
+  <div class="container">
+    <h2>${faq_heading}</h2>
+    ${faq_html}
+  </div>
+</section>
+
+<footer class="site">
+  <div class="container">
+    <div class="cols">
+      <div>
+        <h4>${research_label}</h4>
+        <ul>
+          ${research_html}
+        </ul>
+      </div>
+      <div>
+        <h4>${footer_project_label}</h4>
+        <ul>
+          <li><a href="${github_url}">GitHub</a></li>
+          <li><a href="${llms_href}">llms.txt</a></li>
+          <li><a href="mailto:${cta_email}">${cta_email}</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>${footer_language_label}</h4>
+        <ul>
+          <li><a href="${lang_switch_href}">${lang_switch_label}</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="fine">${tagline}</p>
+  </div>
+</footer>
+</body>
+</html>

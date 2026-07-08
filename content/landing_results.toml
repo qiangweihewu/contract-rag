@@ -1,0 +1,77 @@
+# Point-in-time measured results for the contractrag.com product landing page
+# (evidence wall + "we publish negative results" strip). Injected into
+# content/landing.{en,zh}.toml at site-build time via `load_static_tokens`
+# (auto-merged by `build_site`, same anti-drift convention as
+# content/kleister_results.toml: numbers are hand-edited in exactly one
+# committed file, never in prose). All values as strings so the published
+# formatting is exact. Sources cited per block below.
+
+landing_measured_date = "2026-07-09"
+
+# CUAD 40-doc set, rule extractor + bootstrap CI (eval/stats.py STATS_CI=1;
+# CLAUDE.md "Eval statistics are now first-class", run 2026-07-09).
+cuad_rule_f1 = "0.676"
+cuad_rule_f1_ci = "[0.594, 0.746]"
+cuad_rule_source_acc = "1.000"
+
+# constrained backend (qwen2.5:32b-instruct, local Ollama, server-side
+# response_format=json_schema) vs TOOLS-mode instructor, identical 40-doc CUAD
+# set. Reproduce: scripts/measure_constrained.py (Lambda A100-40GB, run
+# 2026-07-06; two runs gave 0.661/0.672, treat +-0.01 as decoding noise).
+cuad_constrained_f1 = "0.661–0.672"
+cuad_constrained_schema_fail = "0/40"
+cuad_tools_schema_fail = "12/40"
+
+# CUAD dirty->clean lift on real labeled contracts (eval/clean/lift.py,
+# EXTRACT_BACKEND=rule, 40-doc set, dirtify mojibake rate 0.9; source:
+# CLAUDE.md dirtify run). These are also the HERO proof-chip numbers: real
+# CUAD contracts with SIMULATED dirt (the seeded dirtify suite) -- the chip
+# caption on the landing page states that explicitly.
+cuad_dirty_f1 = "0.333"
+cuad_clean_f1 = "0.701"
+cuad_dirty_quality = "0.64"
+cuad_clean_quality = "0.97"
+
+# Kleister-NDA field-F1/source-accuracy numbers already live in
+# content/kleister_results.toml (kleister_f1_initial / kleister_f1_improved /
+# kleister_source_acc) -- reused directly, not duplicated here.
+
+# Tobacco800 (100 real scanned pages, 66 signed / 34 unsigned), signature-
+# presence detector vs GEDI groundtruth. Reproduce:
+#   SIGNATURE_DIR=... SIGNATURE_GT_DIR=... python -m contract_rag.eval.signature
+tobacco800_signature_precision = "0.981"
+tobacco800_signature_recall = "0.773"
+tobacco800_signature_f1 = "0.864"
+tobacco800_unsigned_flagged = "33/34"
+
+# FinCriticalED (85 real degraded SEC EDGAR pages, 491 expert facts), fact-
+# level omission vs the doc-level quality score. Reproduce:
+#   python -m contract_rag.eval.fincritical
+fincritical_n_facts = "491"
+fincritical_omission_rate = "7.7%"
+fincritical_quality_at_omission = "0.998"
+
+# EDiTh / Veracier Industries (86 mixed-format docs, 464 pages), per-page
+# probe vs the doc-level parse route. Reproduce:
+#   python -m contract_rag.eval.edith
+edith_misroute_docs = "98.8%"
+edith_misroute_pages = "204/464"
+
+# --- Negative results (differentiation strip) --------------------------------
+
+# DAPEI-style definition injection, 40-doc set, measured under both a hashing
+# and a semantic (OpenAI) embedder. Source (Results section):
+# docs/superpowers/plans/2026-07-08-retrieval-quality-and-stats.md
+# Hashing embedder: full injection hurt BM25 (0.690 -> 0.664), hybrid flat at
+# 0.586. Semantic embedder: dense-only injection is cell-for-cell IDENTICAL to
+# baseline (hybrid 0.698 unchanged); full injection dragged hybrid to 0.681
+# via the degraded BM25 side. Verdict: not adopted.
+dapei_bm25_before = "0.690"
+dapei_bm25_after = "0.664"
+dapei_hybrid_hashing = "0.586"
+dapei_hybrid_semantic = "0.698"
+dapei_hybrid_semantic_full_inject = "0.681"
+
+# FrankenOCR spike: parity field-F1 vs paddleocr, 25-50x slower, hallucinates
+# on shredded scans -- not adopted (memory: frankenocr-spike, run 2026-07-08).
+frankenocr_slowdown = "25–50×"

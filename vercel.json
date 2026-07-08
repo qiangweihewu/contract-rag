@@ -1,0 +1,18 @@
+{
+  "buildCommand": "pip install 'pydantic>=2.7' 'markdown>=3.5' 'matplotlib>=3.8' 'ftfy>=6.3.1' && SITE_BASE_URL=https://contractrag.com PYTHONPATH=src python -m contract_rag.site build",
+  "outputDirectory": "site_out",
+  "headers": [
+    {
+      "source": "/llms.txt",
+      "headers": [{ "key": "Content-Type", "value": "text/plain; charset=utf-8" }]
+    },
+    {
+      "source": "/robots.txt",
+      "headers": [{ "key": "Content-Type", "value": "text/plain; charset=utf-8" }]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [{ "key": "X-Content-Type-Options", "value": "nosniff" }]
+    }
+  ]
+}

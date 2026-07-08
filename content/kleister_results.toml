@@ -1,0 +1,39 @@
+# Point-in-time measured results, injected into content/kleister-nda.{en,zh}.md
+# at site-build time via `load_static_tokens` (single source of truth for both
+# language versions). These numbers are NOT recomputed at build time: Kleister-NDA
+# states no explicit license, so the dataset is never committed and the eval is
+# gated on KLEISTER_DIR; the structured-decoding runs need a GPU rig. Reproduce:
+#   KLEISTER_DIR=... python -m contract_rag.verticals.nda.kleister --eval
+#   scripts/measure_constrained.py  (Ollama qwen2.5:32b-instruct, 40-doc CUAD set)
+# All values as strings so the published formatting is exact.
+
+kleister_measured_date = "2026-07-06"
+kleister_n_docs = "40"
+
+# Kleister-NDA blended field-F1, rule extractor (initial = rules tuned on the
+# synthetic set; improved = after targeted rule fixes). Source-accuracy both rounds.
+kleister_f1_initial = "0.523"
+kleister_f1_improved = "0.697"
+kleister_source_acc = "1.0"
+
+# Per-field F1 on labeled docs (labeled counts: party 40, effective_date 29,
+# term 14, governing_law 40 — of the 40-doc set).
+kleister_party_initial = "0.025"
+kleister_party_improved = "0.550"
+kleister_date_initial = "0.345"
+kleister_date_improved = "0.759"
+kleister_term_initial = "0.286"
+kleister_term_improved = "0.714"
+kleister_law = "0.925"
+
+# The synthetic NDA golden-set score the Kleister run was built to challenge.
+synthetic_nda_f1 = "0.981"
+
+# Structured-decoding reliability (40-doc CUAD contract set, identical rig:
+# Lambda A100-40GB, Ollama 0.31.1, qwen2.5:32b-instruct @ 32K ctx).
+tools_schema_failures = "12/40"
+constrained_schema_failures = "0/40"
+constrained_f1 = "0.661–0.672"
+constrained_source_acc = "0.744–0.756"
+mlx_f1 = "0.576"
+mlx_source_acc = "0.640"
