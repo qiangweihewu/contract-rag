@@ -191,11 +191,32 @@ def test_render_landing_research_links_and_footer(tmp_path):
     _write_landing_content(tmp_path)
     html = render_landing(_TOKENS, "en", _PAGES, content_dir=tmp_path,
                           base_url="https://contractrag.com")
-    assert 'href="benchmark.html"' in html
-    assert 'href="kleister-nda.html"' in html
+    # Research links are root-absolute, not relative: the zh landing lives at
+    # /zh/, so a relative "slug.html" would resolve to /zh/slug.html and 404.
+    assert 'href="https://contractrag.com/benchmark.html"' in html
+    assert 'href="https://contractrag.com/kleister-nda.html"' in html
     assert "https://github.com/qiangweihewu/contract-rag" in html
     assert 'href="https://contractrag.com/llms.txt"' in html
     assert 'mailto:hello@contractrag.com' in html
+
+
+def test_render_landing_zh_research_links_are_root_absolute(tmp_path):
+    """Regression: the zh landing page sits at /zh/, so its article links MUST be
+    root-absolute — a relative href would 404 at /zh/benchmark.zh.html."""
+    _write_landing_content(tmp_path)
+    zh_pages = [
+        PageMeta(title="为什么 RAG 返回垃圾", description="d", lang="zh", slug="benchmark.zh",
+                 canonical="https://contractrag.com/benchmark.zh.html"),
+    ]
+    html = render_landing(_TOKENS, "zh", zh_pages, content_dir=tmp_path,
+                          base_url="https://contractrag.com")
+    # research nav link (root-absolute)
+    assert 'href="https://contractrag.com/benchmark.zh.html"' in html
+    assert 'href="benchmark.zh.html"' not in html  # the relative form that broke
+    # evidence-table links must also be root-absolute — no relative internal .html
+    assert 'href="benchmark.html"' not in html
+    assert 'href="kleister-nda.html"' not in html
+    assert 'href="https://contractrag.com/benchmark.html"' in html
 
 
 def test_render_landing_evidence_and_negatives_and_faq_render(tmp_path):
@@ -272,8 +293,8 @@ Body {{ f1_dirty }}.
     assert "{{" not in en_html and "{{" not in zh_html
     assert '<html lang="en">' in en_html
     assert '<html lang="zh">' in zh_html
-    # Research nav links to the existing article page (no auto-generated list index)
-    assert 'href="benchmark.html"' in en_html
+    # Research nav links to the existing article page (root-absolute, no auto-index)
+    assert 'href="https://contractrag.com/benchmark.html"' in en_html
     sitemap = (out / "sitemap.xml").read_text()
     assert "<loc>https://contractrag.com/</loc>" in sitemap
     assert "<loc>https://contractrag.com/zh/</loc>" in sitemap

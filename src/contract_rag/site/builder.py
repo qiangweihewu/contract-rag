@@ -133,10 +133,14 @@ def _render_pillars(pillars: list[LandingPillar]) -> str:
     )
 
 
-def _render_evidence(rows: list[LandingEvidenceRow]) -> str:
+def _render_evidence(rows: list[LandingEvidenceRow], base: str) -> str:
+    """Evidence-row links are made root-absolute for the same reason as the
+    research nav (the zh landing sits at /zh/); an already-absolute link
+    (http(s):// or leading /) is left untouched so external citations still work."""
     trs = []
     for r in rows:
-        cell = f'<a href="{r.link}">{r.label}</a>' if r.link else r.label
+        href = r.link if r.link.startswith(("http://", "https://", "/")) else f"{base}/{r.link}"
+        cell = f'<a href="{href}">{r.label}</a>' if r.link else r.label
         trs.append(f"<tr><td>{cell}</td><td>{r.value}</td></tr>")
     return "\n".join(trs)
 
@@ -151,11 +155,14 @@ def _render_faq(faq) -> str:
     )
 
 
-def _render_research(pages: list[PageMeta], lang: str) -> str:
+def _render_research(pages: list[PageMeta], lang: str, base: str) -> str:
     """Research nav lists articles in the current page's language only, so the
-    en landing page doesn't surface zh-titled links (and vice versa)."""
+    en landing page doesn't surface zh-titled links (and vice versa). Links are
+    root-absolute (`{base}/slug.html`): the zh landing lives at `/zh/`, so a
+    relative `slug.html` would resolve to `/zh/slug.html` and 404 — the articles
+    are emitted at the site root."""
     return "\n".join(
-        f'<li><a href="{p.slug}.html">{p.title}</a></li>'
+        f'<li><a href="{base}/{p.slug}.html">{p.title}</a></li>'
         for p in pages if p.lang == lang
     )
 
@@ -198,10 +205,10 @@ def render_landing(tokens: dict[str, str], lang: str, pages: list[PageMeta], *,
         negatives_heading=content.negatives_heading,
         faq_heading=content.faq_heading,
         pillars_html=_render_pillars(content.pillars),
-        evidence_html=_render_evidence(content.evidence),
+        evidence_html=_render_evidence(content.evidence, base),
         negatives_html=_render_negatives(content.negatives),
         faq_html=_render_faq(content.faq),
-        research_html=_render_research(pages, lang),
+        research_html=_render_research(pages, lang, base),
         research_label=content.research_label,
         footer_project_label=content.footer_project_label,
         footer_language_label=content.footer_language_label,
