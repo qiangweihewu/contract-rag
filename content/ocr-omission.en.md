@@ -3,6 +3,7 @@ title = "OCR confidence can't detect omissions: what a near-perfect quality scor
 description = "Measured on {{ fin_n_pages }} real degraded SEC filings: {{ fin_omission_rate }} of {{ fin_n_facts }} expert-labeled facts appear nowhere in the OCR output, while the document-level quality score reads {{ fin_quality_score }} — and no OCR confidence threshold can flag the loss, because an omitted fact produces no block at all."
 lang = "en"
 slug = "ocr-omission"
+date = "2026-07-09"
 target_queries = [
   "why does OCR miss text",
   "detect missing text in scanned documents",

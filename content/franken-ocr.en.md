@@ -3,6 +3,7 @@ title = "We benchmarked the hyped new OCR engine — and kept the old one"
 description = "FrankenOCR (a pure-Rust, CPU-only 3B-VLM OCR wrapper) vs PaddleOCR on our own harness: extraction parity (field-F1 {{ fr_f1_light }} vs {{ fr_paddle_f1_light }}, n={{ fr_degrade_n }} = noise), {{ fr_slowdown }} slower ({{ fr_sec_per_page }}/page vs {{ fr_paddle_sec_per_page }}), and a failure mode worse than garble: confident structured hallucination on unreadable pages that our quality score reads as {{ fr_quality_shred }}."
 lang = "en"
 slug = "franken-ocr"
+date = "2026-07-09"
 target_queries = [
   "FrankenOCR vs PaddleOCR",
   "FrankenOCR benchmark",

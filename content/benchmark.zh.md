@@ -3,6 +3,7 @@ title = "为什么你的合同 RAG 检索全是乱码——一个可复现的解
 description = "一条命令、无需凭据的前后对比基准测试：清洗脏合同 PDF 可在已提交的合成数据集上显著提升数据质量与抽取准确率。"
 lang = "zh"
 slug = "benchmark.zh"
+date = "2026-07-01"
 target_queries = [
   "RAG 进不了生产怎么办",
   "合同 RAG 检索乱码",

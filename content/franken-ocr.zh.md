@@ -3,6 +3,7 @@ title = "我们把爆火的新 OCR 引擎摆上了基准测试——然后留下
 description = "FrankenOCR（纯 Rust、纯 CPU 的 3B VLM OCR 封装）对 PaddleOCR，在我们自己的评测框架上：抽取打平（字段 F1 {{ fr_f1_light }} vs {{ fr_paddle_f1_light }}，n={{ fr_degrade_n }}，属噪声），慢 {{ fr_slowdown }}（{{ fr_sec_per_page }}/页 vs {{ fr_paddle_sec_per_page }}），以及一个比乱码更糟的失败模式：在不可读页面上自信地幻觉出结构——我们的质量分数把它读成 {{ fr_quality_shred }}。"
 lang = "zh"
 slug = "franken-ocr.zh"
+date = "2026-07-09"
 target_queries = [
   "FrankenOCR PaddleOCR 对比",
   "FrankenOCR 评测",

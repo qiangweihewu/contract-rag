@@ -3,6 +3,7 @@ title = "Kleister-NDA 实测：公开基准上的诚实抽取数字"
 description = "在公开的 Kleister-NDA 基准（真实 SEC EDGAR 保密协议）上的定点实测结果：规则抽取字段 F1 {{ kleister_f1_initial }} → {{ kleister_f1_improved }}，来源归因准确率 {{ kleister_source_acc }}；以及服务端 Schema 约束解码为何消除了 30% 的结构化输出失败。"
 lang = "zh"
 slug = "kleister-nda.zh"
+date = "2026-07-07"
 target_queries = [
   "NDA 抽取基准测试",
   "Kleister NDA 测评结果",

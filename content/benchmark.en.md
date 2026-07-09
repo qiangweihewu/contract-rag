@@ -3,6 +3,7 @@ title = "Why your contract RAG returns garbage — and a reproducible fix"
 description = "A one-command, credential-free before/after benchmark: cleaning dirty contract PDFs lifts data-quality and extraction accuracy on a committed synthetic set."
 lang = "en"
 slug = "benchmark"
+date = "2026-07-01"
 target_queries = [
   "why is my RAG returning garbage",
   "how to clean PDFs for RAG extraction",

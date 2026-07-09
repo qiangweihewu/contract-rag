@@ -3,6 +3,7 @@ title = "Was this contract ever physically signed? Detecting unsigned documents 
 description = "A signature-presence detector for scanned documents, scored against expert zone annotations on {{ sig_n_pages }} real Tobacco800 pages: precision {{ sig_precision }}, F1 {{ sig_f1 }} — and, the actually useful part, it flags {{ sig_unsigned_flagged }} of {{ sig_unsigned_total }} unsigned documents where the always-signed assumption flags zero."
 lang = "en"
 slug = "signature-detection"
+date = "2026-07-09"
 target_queries = [
   "detect signature in scanned document",
   "check if a contract was signed",

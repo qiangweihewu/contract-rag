@@ -6,16 +6,23 @@
 <title>${title}</title>
 <meta name="description" content="${description}">
 <link rel="canonical" href="${canonical}">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 ${hreflang}
+${social}
 <script type="application/ld+json">${jsonld}</script>
 ${analytics}
 <style>
 body{max-width:46rem;margin:2rem auto;padding:0 1rem;font:1rem/1.6 system-ui,sans-serif;color:#1a1a1a}
 h1,h2{line-height:1.25} img{max-width:100%} blockquote{border-left:4px solid #27ae60;margin:1rem 0;padding:.25rem 1rem;color:#333}
 code{background:#f4f4f4;padding:.1rem .3rem;border-radius:3px}
+nav.research-nav{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid #ddd}
+nav.research-nav h2{font-size:1rem;margin:0 0 .6rem;color:#333}
+nav.research-nav ul{margin:0;padding-left:1.2rem}
+nav.research-nav li{margin-bottom:.3rem}
 </style>
 </head>
 <body>
 ${body}
+${research_nav}
 </body>
 </html>

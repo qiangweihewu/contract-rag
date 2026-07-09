@@ -326,7 +326,10 @@ Body {{ f1_dirty }}.
 
 def test_existing_article_pages_byte_identical_with_landing_page_added(tmp_path):
     """Global constraint 3: adding the landing page must not change any existing
-    article's rendered bytes."""
+    article's rendered bytes. llms.txt is the one deliberate exception (item 4):
+    it legitimately gains two landing-page links + its own content once the
+    landing pages exist (`include_landing`), so it is checked separately below
+    rather than asserted byte-identical."""
     pytest.importorskip("markdown")
     repo = Path(__file__).resolve().parent.parent
     content = repo / "content"
@@ -347,7 +350,14 @@ def test_existing_article_pages_byte_identical_with_landing_page_added(tmp_path)
 
     for name in ("benchmark.html", "benchmark.zh.html", "kleister-nda.html", "kleister-nda.zh.html"):
         assert (out_with / name).read_text() == (out_without / name).read_text(), name
-    assert (out_with / "llms.txt").read_text() == (out_without / "llms.txt").read_text()
+    # llms.txt: article-list portion is unchanged; the landing build additionally
+    # prepends the two landing-page links (item 4) — both link the GitHub repo.
+    llms_with = (out_with / "llms.txt").read_text()
+    llms_without = (out_without / "llms.txt").read_text()
+    assert "https://contractrag.com/): Product landing page" in llms_with
+    assert "https://contractrag.com/): Product landing page" not in llms_without
+    assert "https://github.com/qiangweihewu/contract-rag" in llms_with
+    assert "https://github.com/qiangweihewu/contract-rag" in llms_without
 
 
 def test_build_site_real_landing_content_resolves_all_tokens(tmp_path):

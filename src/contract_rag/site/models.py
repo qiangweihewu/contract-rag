@@ -23,6 +23,7 @@ class PageMeta(BaseModel):
     lang: str
     slug: str
     canonical: str = ""
+    date: str | None = None
     target_queries: list[str] = Field(default_factory=list)
     faq: list[FAQItem] = Field(default_factory=list)
     howto: list[HowToStep] = Field(default_factory=list)

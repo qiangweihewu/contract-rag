@@ -3,6 +3,7 @@ title = "Kleister-NDA, measured: honest extraction numbers on a public benchmark
 description = "Point-in-time results on the public Kleister-NDA benchmark (real SEC EDGAR NDAs): rule-based field-F1 {{ kleister_f1_initial }} → {{ kleister_f1_improved }} with source-accuracy {{ kleister_source_acc }}, and why server-side schema-constrained decoding eliminated 30% structured-output failures."
 lang = "en"
 slug = "kleister-nda"
+date = "2026-07-07"
 target_queries = [
   "NDA extraction benchmark",
   "Kleister NDA results",

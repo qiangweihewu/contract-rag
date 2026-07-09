@@ -9,6 +9,7 @@ from contract_rag.site.builder import (
     analytics_snippet,
     benchmark_tokens,
     build_site,
+    favicon_svg,
     load_static_tokens,
     robots_txt,
     sitemap_xml,
@@ -221,3 +222,208 @@ def test_build_site_now_defaults_when_omitted(tmp_path):
               benchmark=run_nda_benchmark(seed=0))
     sitemap = (out / "sitemap.xml").read_text()
     assert "<lastmod>" in sitemap and "</lastmod>" in sitemap
+
+
+def test_sitemap_xml_uses_page_date_when_set_else_now():
+    pages = [
+        PageMeta(title="A", description="d", lang="en", slug="a",
+                 canonical="https://contractrag.com/a.html", date="2026-01-01"),
+        PageMeta(title="B", description="d", lang="en", slug="b",
+                 canonical="https://contractrag.com/b.html"),
+    ]
+    xml = sitemap_xml(pages, now="2026-07-09")
+    assert "<loc>https://contractrag.com/a.html</loc><lastmod>2026-01-01</lastmod>" in xml
+    assert "<loc>https://contractrag.com/b.html</loc><lastmod>2026-07-09</lastmod>" in xml
+
+
+# --- items 1/2/5/6: hreflang pairing, OG/Twitter tags, favicon, research nav --
+
+_EN_A = '''+++
+title = "Article A"
+description = "Desc A"
+lang = "en"
+slug = "a"
+date = "2026-01-01"
++++
+# A
+
+Body A.
+'''
+
+_ZH_A = '''+++
+title = "文章 A"
+description = "描述 A"
+lang = "zh"
+slug = "a.zh"
+date = "2026-01-01"
++++
+# A zh
+
+正文 A。
+'''
+
+_EN_B_NO_ZH = '''+++
+title = "Article B"
+description = "Desc B"
+lang = "en"
+slug = "b"
++++
+# B
+
+Body B.
+'''
+
+_ZH_C_NO_EN = '''+++
+title = "文章 C"
+description = "描述 C"
+lang = "zh"
+slug = "c.zh"
++++
+# C zh
+
+正文 C。
+'''
+
+
+def _write_multi_lang_content(content_dir: Path) -> None:
+    content_dir.mkdir(parents=True, exist_ok=True)
+    (content_dir / "a.en.md").write_text(_EN_A)
+    (content_dir / "a.zh.md").write_text(_ZH_A)
+    (content_dir / "b.en.md").write_text(_EN_B_NO_ZH)
+    (content_dir / "c.zh.md").write_text(_ZH_C_NO_EN)
+
+
+def test_hreflang_pairs_only_and_x_default(tmp_path):
+    """Item 1 (bug fix): an article's hreflang block lists ONLY its own
+    en/zh pair, not every article on the site, plus an x-default pointing at
+    the en version (or itself, when there is no en counterpart)."""
+    pytest.importorskip("markdown")
+    content = tmp_path / "content"
+    _write_multi_lang_content(content)
+    out = tmp_path / "site_out"
+    build_site(content, out, base_url="https://contractrag.com", now="2026-07-09")
+
+    html_a_en = (out / "a.html").read_text()
+    assert html_a_en.count('rel="alternate" hreflang="en"') == 1
+    assert html_a_en.count('rel="alternate" hreflang="zh"') == 1
+    assert html_a_en.count('hreflang="x-default"') == 1
+    assert '<link rel="alternate" hreflang="en" href="https://contractrag.com/a.html">' in html_a_en
+    assert '<link rel="alternate" hreflang="zh" href="https://contractrag.com/a.zh.html">' in html_a_en
+    assert '<link rel="alternate" hreflang="x-default" href="https://contractrag.com/a.html">' in html_a_en
+    # not every article on the site — b/c must not leak in
+    assert "b.html" not in html_a_en.split("<script")[0]
+    assert "c.zh.html" not in html_a_en.split("<script")[0]
+
+    html_a_zh = (out / "a.zh.html").read_text()
+    assert html_a_zh.count('rel="alternate" hreflang="en"') == 1
+    assert html_a_zh.count('rel="alternate" hreflang="zh"') == 1
+    assert html_a_zh.count('hreflang="x-default"') == 1
+    # x-default always points at the en version, even from the zh page
+    assert '<link rel="alternate" hreflang="x-default" href="https://contractrag.com/a.html">' in html_a_zh
+
+    # b has no zh counterpart: just itself (en) + x-default (2 links total)
+    html_b = (out / "b.html").read_text()
+    assert html_b.count('rel="alternate" hreflang="en"') == 1
+    assert 'hreflang="zh"' not in html_b
+    assert '<link rel="alternate" hreflang="x-default" href="https://contractrag.com/b.html">' in html_b
+
+    # c has no en counterpart: just itself (zh) + x-default pointing at itself
+    html_c = (out / "c.zh.html").read_text()
+    assert 'hreflang="en"' not in html_c
+    assert html_c.count('rel="alternate" hreflang="zh"') == 1
+    assert '<link rel="alternate" hreflang="x-default" href="https://contractrag.com/c.zh.html">' in html_c
+
+
+def test_build_site_articles_have_og_and_twitter_tags(tmp_path):
+    """Item 2: every article page gets Open Graph + Twitter Card meta, with
+    og:type=article and og:locale derived from the page's own language."""
+    pytest.importorskip("markdown")
+    content = tmp_path / "content"
+    _write_multi_lang_content(content)
+    out = tmp_path / "site_out"
+    build_site(content, out, base_url="https://contractrag.com", now="2026-07-09")
+
+    html_en = (out / "a.html").read_text()
+    assert 'property="og:title" content="Article A"' in html_en
+    assert 'property="og:description" content="Desc A"' in html_en
+    assert 'property="og:url" content="https://contractrag.com/a.html"' in html_en
+    assert 'property="og:site_name" content="contract-rag"' in html_en
+    assert 'property="og:type" content="article"' in html_en
+    assert 'property="og:locale" content="en_US"' in html_en
+    assert '<meta name="twitter:card" content="summary">' in html_en
+
+    html_zh = (out / "a.zh.html").read_text()
+    assert 'property="og:locale" content="zh_CN"' in html_zh
+    assert 'property="og:type" content="article"' in html_zh
+
+
+def test_build_site_datepublished_flows_into_json_ld(tmp_path):
+    """Item 3: a `date` front-matter field produces datePublished/dateModified
+    in the article's TechArticle JSON-LD; b has no `date`, so neither key appears."""
+    pytest.importorskip("markdown")
+    content = tmp_path / "content"
+    _write_multi_lang_content(content)
+    out = tmp_path / "site_out"
+    build_site(content, out, base_url="https://contractrag.com", now="2026-07-09")
+
+    html_a = (out / "a.html").read_text()
+    assert '"datePublished": "2026-01-01"' in html_a
+    assert '"dateModified": "2026-01-01"' in html_a
+    assert '"publisher": {"@type": "Organization"' in html_a
+
+    html_b = (out / "b.html").read_text()
+    assert "datePublished" not in html_b
+    assert '"publisher": {"@type": "Organization"' in html_b  # publisher is unconditional
+
+
+def test_build_site_writes_favicon(tmp_path):
+    """Item 5: build_site emits a self-contained favicon.svg, linked from every
+    page's <head>."""
+    pytest.importorskip("markdown")
+    content = tmp_path / "content"
+    _write_multi_lang_content(content)
+    out = tmp_path / "site_out"
+    written = build_site(content, out, base_url="https://contractrag.com", now="2026-07-09")
+
+    favicon_path = out / "favicon.svg"
+    assert favicon_path in written
+    svg = favicon_path.read_text()
+    assert svg == favicon_svg()
+    assert svg.startswith("<svg")
+    assert "#1a7f5e" in svg  # matches the landing page's --accent
+
+    for name in ("a.html", "a.zh.html", "b.html"):
+        assert '<link rel="icon" type="image/svg+xml" href="/favicon.svg">' in (out / name).read_text()
+
+
+def test_build_site_related_research_nav_is_language_scoped(tmp_path):
+    """Item 6: the 'More research' / '更多研究' footer nav on an article page
+    lists only OTHER articles in that page's OWN language, root-absolute."""
+    pytest.importorskip("markdown")
+    content = tmp_path / "content"
+    _write_multi_lang_content(content)
+    out = tmp_path / "site_out"
+    build_site(content, out, base_url="https://contractrag.com", now="2026-07-09")
+
+    html_a_en = (out / "a.html").read_text()
+    assert "More research" in html_a_en
+    assert '<a href="https://contractrag.com/b.html">Article B</a>' in html_a_en
+    assert "文章" not in html_a_en  # no zh-titled article surfaced on the en page
+
+    html_b_en = (out / "b.html").read_text()
+    assert '<a href="https://contractrag.com/a.html">Article A</a>' in html_b_en
+
+    html_a_zh = (out / "a.zh.html").read_text()
+    assert "更多研究" in html_a_zh
+    assert '<a href="https://contractrag.com/c.zh.html">文章 C</a>' in html_a_zh
+    nav_zh = html_a_zh[html_a_zh.index('<nav class="research-nav">'):]
+    assert "Article" not in nav_zh  # no en-titled article surfaced on the zh page's nav
+
+    # a single-article language family (no other same-language articles) gets
+    # no <nav> at all, not an empty one
+    solo_content = tmp_path / "content_solo"
+    solo_content.mkdir()
+    (solo_content / "a.en.md").write_text(_EN_A)
+    solo_out = tmp_path / "site_out_solo"
+    build_site(solo_content, solo_out, base_url="https://contractrag.com", now="2026-07-09")
+    assert '<nav class="research-nav">' not in (solo_out / "a.html").read_text()

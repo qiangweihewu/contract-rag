@@ -13,7 +13,7 @@ from string import Template
 from urllib.parse import quote
 
 from contract_rag.benchmark.core import BenchmarkResult
-from contract_rag.site.geo import json_ld, landing_json_ld, llms_txt
+from contract_rag.site.geo import json_ld, landing_json_ld, llms_txt, social_meta
 from contract_rag.site.models import (
     LandingContent,
     LandingEvidenceRow,
@@ -110,10 +110,12 @@ def robots_txt(*, base_url: str) -> str:
 
 
 def sitemap_xml(pages: list[PageMeta], *, now: str) -> str:
-    """sitemap.xml: one <url> per built page, with a `<lastmod>` from the `now`
-    seam so the build stays deterministic in tests."""
+    """sitemap.xml: one <url> per built page, with a `<lastmod>` from the page's
+    own front-matter `date` when set (a page's true last-published date), falling
+    back to the `now` seam otherwise — so the build stays deterministic in tests
+    for pages without a `date` (e.g. synthesized landing-page PageMetas)."""
     urls = "\n".join(
-        f"  <url><loc>{p.canonical}</loc><lastmod>{now}</lastmod></url>"
+        f"  <url><loc>{p.canonical}</loc><lastmod>{p.date or now}</lastmod></url>"
         for p in pages
     )
     return (
@@ -124,12 +126,63 @@ def sitemap_xml(pages: list[PageMeta], *, now: str) -> str:
     )
 
 
+def _article_lang_pair(pages: list[PageMeta], this: PageMeta) -> tuple[PageMeta | None, PageMeta | None]:
+    """Resolve `this` article's (en, zh) counterparts by the slug-pairing
+    convention (zh slug = en slug + ".zh"). Either side may be `None` when the
+    article has no translated counterpart."""
+    en_slug = this.slug[: -len(".zh")] if this.slug.endswith(".zh") else this.slug
+    zh_slug = en_slug + ".zh"
+    en_page = next((p for p in pages if p.lang == "en" and p.slug == en_slug), None)
+    zh_page = next((p for p in pages if p.lang == "zh" and p.slug == zh_slug), None)
+    return en_page, zh_page
+
+
 def _hreflang(pages: list[PageMeta], this: PageMeta) -> str:
+    """hreflang alternates for one article: only ITS OWN language pair (not every
+    article on the site), plus an `x-default` pointing at the en version (or at
+    the page itself, when there is no en counterpart)."""
     base = this.canonical.rsplit("/", 1)[0]
-    return "\n".join(
-        f'<link rel="alternate" hreflang="{p.lang}" href="{base}/{p.slug}.html">'
-        for p in pages
-    )
+    en_page, zh_page = _article_lang_pair(pages, this)
+    links = []
+    if en_page is not None:
+        links.append(f'<link rel="alternate" hreflang="en" href="{base}/{en_page.slug}.html">')
+    if zh_page is not None:
+        links.append(f'<link rel="alternate" hreflang="zh" href="{base}/{zh_page.slug}.html">')
+    default_page = en_page or this
+    links.append(f'<link rel="alternate" hreflang="x-default" href="{base}/{default_page.slug}.html">')
+    return "\n".join(links)
+
+
+def _render_article_research_nav(pages: list[PageMeta], this: PageMeta, base: str) -> str:
+    """'More research' footer nav for an article page: links to the OTHER
+    articles in the SAME language only (mirrors `_render_research`'s language
+    scoping for the landing page), root-absolute since articles are emitted at
+    the site root regardless of the current page's own path. Empty when there
+    are no other articles in this language (e.g. a single-page content dir in
+    tests), so no empty <nav> is emitted."""
+    others = [p for p in pages if p.lang == this.lang and p.slug != this.slug]
+    if not others:
+        return ""
+    heading = "更多研究" if this.lang == "zh" else "More research"
+    items = "\n".join(f'<li><a href="{base}/{p.slug}.html">{p.title}</a></li>' for p in others)
+    return f'<nav class="research-nav"><h2>{heading}</h2><ul>\n{items}\n</ul></nav>'
+
+
+_FAVICON_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
+    '<rect width="64" height="64" rx="14" fill="#1a7f5e"/>'
+    '<text x="32" y="45" font-family="-apple-system,BlinkMacSystemFont,'
+    "'Segoe UI',Roboto,Helvetica,Arial,sans-serif\" font-size=\"34\" "
+    'font-weight="700" fill="#ffffff" text-anchor="middle">C</text>'
+    "</svg>\n"
+)
+
+
+def favicon_svg() -> str:
+    """Tiny self-contained favicon: a dark-green rounded square with a white
+    "C", matching the landing page's `--accent` color (#1a7f5e). Pure string,
+    no image-library dependency."""
+    return _FAVICON_SVG
 
 
 def load_landing_content(path: Path | str, tokens: dict[str, str]) -> LandingContent:
@@ -202,11 +255,13 @@ def render_landing(tokens: dict[str, str], lang: str, pages: list[PageMeta], *,
     jsonld = landing_json_ld(name="contract-rag", url=canonical, description=content.description,
                              github_url=content.github_url, faq=content.faq)
     cta_mailto = f"mailto:{content.cta_email}?subject={quote(content.cta_text)}"
+    social = social_meta(title=content.title, description=content.description,
+                         url=canonical, lang=lang, og_type="website")
 
     tmpl = _landing_template()
     return tmpl.substitute(
         lang=lang, title=content.title, description=content.description,
-        canonical=canonical, hreflang=hreflang, analytics=analytics,
+        canonical=canonical, hreflang=hreflang, analytics=analytics, social=social,
         jsonld=json.dumps(jsonld, ensure_ascii=False),
         headline=content.headline, subhead=content.subhead,
         cta_text=content.cta_text, cta_suffix=content.cta_suffix,
@@ -246,6 +301,13 @@ def build_site(content_dir, out_dir, *, base_url: str,
 
     content_dir, out_dir = Path(content_dir), Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    base = base_url.rstrip("/")
+    # The product landing page (/ + /zh/) replaces the auto-generated article
+    # index when both are present — computed early so llms.txt (below) can
+    # decide whether to list them too.
+    en_landing = content_dir / "landing.en.toml"
+    zh_landing = content_dir / "landing.zh.toml"
+    has_landing = en_landing.exists() and zh_landing.exists()
     if static_tokens is None:
         static_tokens = {}
         for toml_path in sorted(content_dir.glob("*.toml")):
@@ -275,10 +337,13 @@ def build_site(content_dir, out_dir, *, base_url: str,
             item.step = _substitute_tokens(item.step, tokens)
         body = _substitute_tokens(body, tokens)
         html_body = markdown.markdown(body, extensions=["extra", "toc", "sane_lists"])
+        social = social_meta(title=meta.title, description=meta.description,
+                             url=meta.canonical, lang=meta.lang, og_type="article")
         page_html = tmpl.substitute(
             lang=meta.lang, title=meta.title, description=meta.description,
             canonical=meta.canonical, hreflang=_hreflang(metas, meta), analytics=analytics,
-            jsonld=json.dumps(json_ld(meta), ensure_ascii=False), body=html_body,
+            social=social, jsonld=json.dumps(json_ld(meta), ensure_ascii=False), body=html_body,
+            research_nav=_render_article_research_nav(metas, meta, base),
         )
         dest = out_dir / f"{meta.slug}.html"
         dest.write_text(page_html)
@@ -290,22 +355,21 @@ def build_site(content_dir, out_dir, *, base_url: str,
         shutil.copytree(charts_dir, dst, dirs_exist_ok=True)
 
     llms = out_dir / "llms.txt"
-    llms.write_text(llms_txt(metas, base_url=base_url))
+    llms.write_text(llms_txt(metas, base_url=base_url, include_landing=has_landing))
     written.append(llms)
 
     robots = out_dir / "robots.txt"
     robots.write_text(robots_txt(base_url=base_url))
     written.append(robots)
 
-    # The product landing page (/ + /zh/) replaces the auto-generated article
-    # index when `content/landing.{en,zh}.toml` are present — additive: content
-    # dirs without them (all existing tests, any future minimal fixture) keep
-    # getting the old auto-index, byte-identical.
-    en_landing = content_dir / "landing.en.toml"
-    zh_landing = content_dir / "landing.zh.toml"
+    favicon = out_dir / "favicon.svg"
+    favicon.write_text(favicon_svg())
+    written.append(favicon)
+
+    # additive: content dirs without landing.{en,zh}.toml (all existing tests,
+    # any future minimal fixture) keep getting the old auto-index, byte-identical.
     sitemap_pages = list(metas)
-    if en_landing.exists() and zh_landing.exists():
-        base = base_url.rstrip("/")
+    if has_landing:
         en_html = render_landing(tokens, "en", metas, content_dir=content_dir,
                                  base_url=base_url, analytics=analytics)
         zh_html = render_landing(tokens, "zh", metas, content_dir=content_dir,
