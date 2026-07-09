@@ -60,8 +60,8 @@ edith_misroute_pages = "204/464"
 # --- Negative results (differentiation strip) --------------------------------
 
 # DAPEI-style definition injection, 40-doc set, measured under both a hashing
-# and a semantic (OpenAI) embedder. Source (Results section):
-# docs/superpowers/plans/2026-07-08-retrieval-quality-and-stats.md
+# and a semantic (OpenAI) embedder. Source: the definition-injection eval runs
+# of 2026-07-08/09 (eval/retrieval.py with INJECT_DEFS, 40-doc CUAD set).
 # Hashing embedder: full injection hurt BM25 (0.690 -> 0.664), hybrid flat at
 # 0.586. Semantic embedder: dense-only injection is cell-for-cell IDENTICAL to
 # baseline (hybrid 0.698 unchanged); full injection dragged hybrid to 0.681
@@ -73,5 +73,5 @@ dapei_hybrid_semantic = "0.698"
 dapei_hybrid_semantic_full_inject = "0.681"
 
 # FrankenOCR spike: parity field-F1 vs paddleocr, 25-50x slower, hallucinates
-# on shredded scans -- not adopted (memory: frankenocr-spike, run 2026-07-08).
+# on shredded scans -- not adopted (internal benchmark run, 2026-07-08).
 frankenocr_slowdown = "25–50×"
