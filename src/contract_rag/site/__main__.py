@@ -11,7 +11,7 @@ from contract_rag.site.builder import build_site
 
 
 def build(content_dir, out_dir, *, base_url: str, seed: int = 0,
-          now: str | None = None) -> list[Path]:
+          analytics_code: str | None = None, now: str | None = None) -> list[Path]:
     result = run_nda_benchmark(seed=seed)
     # Write charts to benchmark_out/charts/ so build_site can copy them into out_dir/charts/
     # without a self-copy collision (which happens when charts_dir is inside out_dir).
@@ -22,13 +22,15 @@ def build(content_dir, out_dir, *, base_url: str, seed: int = 0,
     except ImportError:
         charts_dir = None  # charts optional; article still builds
     return build_site(content_dir, out_dir, base_url=base_url,
-                      benchmark=result, charts_dir=charts_dir, now=now)
+                      benchmark=result, charts_dir=charts_dir,
+                      analytics_code=analytics_code, now=now)
 
 
 def main() -> None:
     base_url = os.environ.get("SITE_BASE_URL", "https://qiangweihewu.github.io/contract-rag")
     written = build(Path("content"), Path(os.environ.get("SITE_OUT", "site_out")),
                     base_url=base_url, seed=int(os.environ.get("BENCHMARK_SEED", "0")),
+                    analytics_code=os.environ.get("GOATCOUNTER_CODE") or None,
                     now=date.today().isoformat())
     print(f"built {len(written)} files to site_out/")
 

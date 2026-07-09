@@ -62,6 +62,19 @@ def _substitute_tokens(body: str, tokens: dict[str, str]) -> str:
     return body
 
 
+def analytics_snippet(code: str | None) -> str:
+    """Privacy-friendly GoatCounter pageview beacon, injected into every page's
+    <head> when `code` is set (via GOATCOUNTER_CODE at build time). Returns an
+    empty string when unset, so an analytics-free build is byte-identical to
+    before. `code` is normally the account subdomain (e.g. "contractrag" ->
+    https://contractrag.goatcounter.com/count); a full `https://…/count`
+    endpoint is accepted verbatim for self-hosted installs."""
+    if not code:
+        return ""
+    endpoint = code if "://" in code else f"https://{code}.goatcounter.com/count"
+    return f'<script data-goatcounter="{endpoint}" async src="//gc.zgo.at/count.js"></script>'
+
+
 def _substitute_recursive(obj, tokens: dict[str, str]):
     """Apply `_substitute_tokens` through nested TOML data (dict/list of
     dict/str) — the landing content has tokens inside list-of-table entries
@@ -168,7 +181,7 @@ def _render_research(pages: list[PageMeta], lang: str, base: str) -> str:
 
 
 def render_landing(tokens: dict[str, str], lang: str, pages: list[PageMeta], *,
-                   content_dir: Path | str, base_url: str) -> str:
+                   content_dir: Path | str, base_url: str, analytics: str = "") -> str:
     """Render the bilingual product landing page (`index.html` / `zh/index.html`).
     Loads `content/landing.{lang}.toml`, substitutes every `{{ token }}`, and
     fills `templates/landing.html`. `pages` are the existing article pages,
@@ -193,7 +206,7 @@ def render_landing(tokens: dict[str, str], lang: str, pages: list[PageMeta], *,
     tmpl = _landing_template()
     return tmpl.substitute(
         lang=lang, title=content.title, description=content.description,
-        canonical=canonical, hreflang=hreflang,
+        canonical=canonical, hreflang=hreflang, analytics=analytics,
         jsonld=json.dumps(jsonld, ensure_ascii=False),
         headline=content.headline, subhead=content.subhead,
         cta_text=content.cta_text, cta_suffix=content.cta_suffix,
@@ -223,11 +236,13 @@ def render_landing(tokens: dict[str, str], lang: str, pages: list[PageMeta], *,
 def build_site(content_dir, out_dir, *, base_url: str,
                benchmark: BenchmarkResult | None = None, charts_dir=None,
                static_tokens: dict[str, str] | None = None,
+               analytics_code: str | None = None,
                now: str | None = None) -> list[Path]:
     import markdown  # lazy: extra `site`
 
     if now is None:
         now = date.today().isoformat()
+    analytics = analytics_snippet(analytics_code)
 
     content_dir, out_dir = Path(content_dir), Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -262,7 +277,7 @@ def build_site(content_dir, out_dir, *, base_url: str,
         html_body = markdown.markdown(body, extensions=["extra", "toc", "sane_lists"])
         page_html = tmpl.substitute(
             lang=meta.lang, title=meta.title, description=meta.description,
-            canonical=meta.canonical, hreflang=_hreflang(metas, meta),
+            canonical=meta.canonical, hreflang=_hreflang(metas, meta), analytics=analytics,
             jsonld=json.dumps(json_ld(meta), ensure_ascii=False), body=html_body,
         )
         dest = out_dir / f"{meta.slug}.html"
@@ -291,8 +306,10 @@ def build_site(content_dir, out_dir, *, base_url: str,
     sitemap_pages = list(metas)
     if en_landing.exists() and zh_landing.exists():
         base = base_url.rstrip("/")
-        en_html = render_landing(tokens, "en", metas, content_dir=content_dir, base_url=base_url)
-        zh_html = render_landing(tokens, "zh", metas, content_dir=content_dir, base_url=base_url)
+        en_html = render_landing(tokens, "en", metas, content_dir=content_dir,
+                                 base_url=base_url, analytics=analytics)
+        zh_html = render_landing(tokens, "zh", metas, content_dir=content_dir,
+                                 base_url=base_url, analytics=analytics)
 
         index = out_dir / "index.html"
         index.write_text(en_html)

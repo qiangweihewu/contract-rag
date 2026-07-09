@@ -6,6 +6,7 @@ import pytest
 
 from contract_rag.benchmark.core import run_nda_benchmark
 from contract_rag.site.builder import (
+    analytics_snippet,
     benchmark_tokens,
     build_site,
     load_static_tokens,
@@ -31,6 +32,33 @@ step = "python -m contract_rag.benchmark"
 
 Quality lift was {{ quality_lift }} and field-F1 went {{ f1_dirty }} to {{ f1_clean }}.
 '''
+
+
+def test_analytics_snippet():
+    assert analytics_snippet(None) == ""
+    assert analytics_snippet("") == ""
+    snip = analytics_snippet("contractrag")
+    assert 'data-goatcounter="https://contractrag.goatcounter.com/count"' in snip
+    assert "gc.zgo.at/count.js" in snip
+    # a full endpoint (self-hosted) is passed through verbatim
+    assert 'data-goatcounter="https://stats.example.com/count"' in \
+        analytics_snippet("https://stats.example.com/count")
+
+
+def test_build_site_injects_analytics_when_code_set(tmp_path):
+    pytest.importorskip("markdown")
+    content = tmp_path / "content"
+    content.mkdir()
+    (content / "benchmark.en.md").write_text(_PAGE)
+    out = tmp_path / "site_out"
+    # unset: no beacon anywhere (byte-for-byte the analytics-free build)
+    build_site(content, out, base_url="https://x.github.io/contract-rag",
+               benchmark=run_nda_benchmark(seed=0))
+    assert "goatcounter" not in (out / "benchmark.html").read_text()
+    # set: the beacon lands in the article <head>
+    build_site(content, out, base_url="https://x.github.io/contract-rag",
+               benchmark=run_nda_benchmark(seed=0), analytics_code="contractrag")
+    assert "contractrag.goatcounter.com/count" in (out / "benchmark.html").read_text()
 
 
 def test_benchmark_tokens():
