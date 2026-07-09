@@ -4,6 +4,7 @@ is imported lazily (extra `site`)."""
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import tomllib
 from datetime import date
@@ -68,10 +69,25 @@ def analytics_snippet(code: str | None) -> str:
     empty string when unset, so an analytics-free build is byte-identical to
     before. `code` is normally the account subdomain (e.g. "contractrag" ->
     https://contractrag.goatcounter.com/count); a full `https://…/count`
-    endpoint is accepted verbatim for self-hosted installs."""
+    endpoint is accepted verbatim for self-hosted installs.
+
+    Paste-tolerant: if `code` is a whole pasted `<script data-goatcounter="…">`
+    tag (contains "<"), the endpoint is extracted from its `data-goatcounter`
+    attribute instead of being used verbatim as the endpoint — a common paste
+    mistake (setting the env var to the full tag instead of the bare code)
+    would otherwise nest a `<script>` inside the emitted attribute and produce
+    broken HTML. If no `data-goatcounter="…"` attribute is found in an
+    angle-bracketed value, the value is untrusted and "" is returned rather
+    than emitting broken markup."""
     if not code:
         return ""
-    endpoint = code if "://" in code else f"https://{code}.goatcounter.com/count"
+    if "<" in code:
+        match = re.search(r'data-goatcounter="([^"]*)"', code)
+        if not match:
+            return ""
+        endpoint = match.group(1)
+    else:
+        endpoint = code if "://" in code else f"https://{code}.goatcounter.com/count"
     return f'<script data-goatcounter="{endpoint}" async src="//gc.zgo.at/count.js"></script>'
 
 

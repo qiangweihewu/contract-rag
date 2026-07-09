@@ -44,6 +44,21 @@ def test_analytics_snippet():
     # a full endpoint (self-hosted) is passed through verbatim
     assert 'data-goatcounter="https://stats.example.com/count"' in \
         analytics_snippet("https://stats.example.com/count")
+    # paste-tolerant: the whole GoatCounter <script> tag pasted into the env
+    # var (a common paste mistake) is unwrapped to a single clean beacon, not
+    # nested inside the attribute
+    pasted = analytics_snippet(
+        '<script data-goatcounter="https://contractrag.goatcounter.com/count" '
+        'async src="//gc.zgo.at/count.js"></script>'
+    )
+    assert pasted == (
+        '<script data-goatcounter="https://contractrag.goatcounter.com/count" '
+        'async src="//gc.zgo.at/count.js"></script>'
+    )
+    assert pasted.count("<script") == 1
+    # angle-bracket garbage without a data-goatcounter attribute is untrusted:
+    # never emit broken/nested markup
+    assert analytics_snippet("<not a real tag>") == ""
 
 
 def test_build_site_injects_analytics_when_code_set(tmp_path):
