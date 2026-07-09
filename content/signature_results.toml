@@ -1,0 +1,40 @@
+# Point-in-time measured results, injected into content/signature-detection.{en,zh}.md
+# at site-build time via the static-token auto-merge (single source of truth for
+# both language versions). NOT recomputed at build time: Tobacco800 TIFFs +
+# GEDI XML groundtruth come from external archives and are never committed
+# (gitignored), and the paddleocr parses are slow (IR-cached). Reproduce:
+#   SIGNATURE_DIR=path/to/tobacco800/tiffs SIGNATURE_GT_DIR=path/to/gedi/xml \
+#     uv run python -m contract_rag.eval.signature   (run 2026-07-07)
+# Occlusion-confidence context tokens (realscan_conf_*) live in
+# content/fincritical_results.toml — shared token namespace, not duplicated here.
+# All values as strings so the published formatting is exact.
+
+sig_measured_date = "2026-07-07"
+
+# Eval set: 100 real Tobacco800 pages, GEDI DLSignature zones as ground truth.
+sig_n_pages = "100"
+sig_n_signed = "66"
+sig_n_unsigned = "34"
+
+# Detector vs the trivial always-signed baseline.
+sig_precision = "0.981"
+sig_recall = "0.773"
+sig_f1 = "0.864"
+sig_accuracy = "0.840"
+sig_baseline_precision = "0.660"
+sig_baseline_f1 = "0.795"
+sig_f1_delta = "+0.069"
+sig_unsigned_flagged = "33"
+sig_unsigned_total = "34"
+sig_false_positives = "1"
+
+# Signal statistics measured on the real Tobacco800 IRs.
+sig_salutation_signed = "73%"
+sig_salutation_unsigned = "6%"
+
+# The concrete artifact: what paddleocr emits at an ink signature — a garbled
+# low-confidence token directly above the typed name line.
+sig_squiggle_text = "wm.Hobbr"
+sig_squiggle_conf = "0.62"
+sig_typed_name = "Wm. D. Hobbs"
+sig_typed_name_conf = "1.0"
