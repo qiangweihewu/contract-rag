@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pip install 'pydantic>=2.7' 'markdown>=3.5' 'matplotlib>=3.8' 'ftfy>=6.3.1' && SITE_BASE_URL=https://contractrag.com PYTHONPATH=src python -m contract_rag.site build",
+  "buildCommand": "python3 -m venv .vercel-venv && .vercel-venv/bin/pip install 'pydantic>=2.7' 'markdown>=3.5' 'matplotlib>=3.8' 'ftfy>=6.3.1' && SITE_BASE_URL=https://contractrag.com PYTHONPATH=src .vercel-venv/bin/python -m contract_rag.site build",
   "outputDirectory": "site_out",
   "headers": [
     {
