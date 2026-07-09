@@ -67,6 +67,8 @@ slug = "kleister"
 [[faq]]
 q = "Score?"
 a = "It was {{ kleister_f1_improved }} at source-acc {{ kleister_source_acc }}."
+[[howto]]
+step = "Reproduce the {{ kleister_f1_improved }} run"
 +++
 # Heading
 
@@ -97,6 +99,8 @@ def test_build_site_injects_static_tokens_in_body_and_front_matter(tmp_path):
     # FAQ answer + description flow into the JSON-LD / meta, substituted too
     assert "source-acc 1.0" in html
     assert "F1 reached 0.697." in html
+    # HowTo steps flow into the JSON-LD too, substituted as well
+    assert "Reproduce the 0.697 run" in html
 
 
 def test_real_content_dir_builds_with_all_tokens_resolved(tmp_path):
@@ -111,9 +115,10 @@ def test_real_content_dir_builds_with_all_tokens_resolved(tmp_path):
     out = tmp_path / "site_out"
     build_site(content, out, base_url="https://x.github.io/contract-rag",
                benchmark=run_nda_benchmark(seed=0), static_tokens=tokens)
+    for page in sorted(out.glob("*.html")):         # every article, both langs
+        assert "{{" not in page.read_text(), page.name
     for page in ("kleister-nda.html", "kleister-nda.zh.html"):
         html = (out / page).read_text()
-        assert "{{" not in html, page
         assert "0.697" in html and "0.523" in html   # headline Kleister numbers
         assert "0/40" in html and "12/40" in html    # structured-decoding result
         assert "2026-07-06" in html                  # point-in-time statement

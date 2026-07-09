@@ -1,0 +1,39 @@
+# Point-in-time measured results, injected into content/franken-ocr.{en,zh}.md
+# at site-build time via the static-token auto-merge (single source of truth for
+# both language versions). NOT recomputed at build time: the benchmark needs the
+# focr binary (~3.9GB weights) plus the Tobacco800 scans and a CUAD golden set,
+# none of which are committed. Reproduce (adapter + harness are in this repo):
+#   FRANKEN_BIN=path/to/focr uv run python scripts/benchmark_franken.py   (run 2026-07-08)
+# All values as strings so the published formatting is exact.
+
+fr_measured_date = "2026-07-08"
+fr_version = "v0.5.2"
+fr_binary_size = "5MB"
+fr_weights_size = "~3.9GB"
+
+# Speed arm: 12 real Tobacco800 scanned pages, CPU-only (Apple Silicon laptop).
+fr_realscan_n = "12"
+fr_sec_per_page = "55.9s"
+fr_paddle_sec_per_page = "1–2s"
+fr_slowdown = "25–50×"
+
+# Accuracy arm: degrade-light (5 CUAD contracts, rendered + degraded + OCR'd,
+# rule extractor). n=5 — differences of this size are noise; read as parity.
+fr_degrade_n = "5"
+fr_f1_light = "0.280"
+fr_paddle_f1_light = "0.260"
+
+# The source-accuracy gap is a block-granularity ARTIFACT, not accuracy:
+# franken emits page-sized markdown blocks.
+fr_srcacc_light = "0.800"
+fr_paddle_srcacc_light = "0.400"
+fr_blocks_per_doc = "2.6"
+fr_paddle_blocks_per_doc = "68–142"
+
+# The failure mode: degrade-shred (unreadable pages). Both extract nothing,
+# but franken hallucinates confident structure — and the quality score buys it.
+fr_f1_shred = "0.000"
+fr_hallucination_decode_time = "963s"
+fr_hallucination_size = "50KB"
+fr_quality_shred = "1.000"
+fr_paddle_quality_shred = "0.730"

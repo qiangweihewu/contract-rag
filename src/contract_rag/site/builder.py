@@ -250,11 +250,14 @@ def build_site(content_dir, out_dir, *, base_url: str,
         meta.canonical = f"{base_url.rstrip('/')}/{meta.slug}.html"
 
     for meta, body in parsed:
-        # front matter (description / FAQ answers) may carry tokens too, so the
-        # committed data file stays the single source of truth for en+zh pages
+        # front matter (description / FAQ answers / HowTo steps) may carry tokens
+        # too, so the committed data file stays the single source of truth for
+        # en+zh pages
         meta.description = _substitute_tokens(meta.description, tokens)
         for item in meta.faq:
             item.a = _substitute_tokens(item.a, tokens)
+        for item in meta.howto:
+            item.step = _substitute_tokens(item.step, tokens)
         body = _substitute_tokens(body, tokens)
         html_body = markdown.markdown(body, extensions=["extra", "toc", "sane_lists"])
         page_html = tmpl.substitute(
