@@ -1,0 +1,51 @@
+# Point-in-time measured results, injected into content/ocr-omission.{en,zh}.md
+# at site-build time via the static-token auto-merge (single source of truth for
+# both language versions). These numbers are NOT recomputed at build time: the
+# datasets are download-gated and never committed (FinCriticalED is a gated
+# HuggingFace download; Tobacco800/GEDI come from external archives), and the
+# paddleocr runs are slow. Reproduce:
+#   uv run python -m contract_rag.eval.fincritical   (omission + confidence calibration, run 2026-07-07)
+#   uv run python -m contract_rag.eval.coverage      (ink-coverage validation, run 2026-07-07)
+#   uv run python -m contract_rag.eval.realscan      (Tobacco800 quality calibration, run 2026-07-06)
+# All values as strings so the published formatting is exact.
+
+fincritical_measured_date = "2026-07-07"
+
+# FinCriticalED omission measurement: 85 real degraded SEC EDGAR pages
+# (HuggingFace TheFinAI/FinCriticalED, Apache-2.0), 491 expert-labeled facts,
+# OCR'd via paddleocr through the parse router.
+fin_n_pages = "85"
+fin_n_facts = "491"
+fin_omission_rate = "7.7%"
+fin_omission_one_in = "13"
+fin_omission_number = "8.3%"
+fin_omission_entity = "8.3%"
+fin_quality_score = "0.998"
+
+# Confidence calibration: every gold fact's paired OCR confidence lands in the
+# top two bins, so the reliability curve is flat and no confidence floor reaches
+# 95% fact survival.
+fin_bin95_survival = "0.912"
+fin_bin95_n = "80"
+fin_bin99_survival = "0.925"
+fin_bin99_n = "411"
+fin_survival_target = "95%"
+
+# Context from the Tobacco800 realscan run (100 real scanned pages): the same
+# quality-formula blind spot, plus the block-confidence occlusion signal.
+realscan_quality_mean = "0.987"
+realscan_conf_occluded = "0.893"
+realscan_conf_elsewhere = "0.963"
+
+# Geometric ink-coverage signal (clean/coverage.py) validated against both
+# ground-truth datasets (eval/coverage.py): strong at region scale, weak at
+# individual-fact scale.
+cov_zone_density_in = "0.087"
+cov_zone_density_out = "0.016"
+cov_zone_ratio = "5.4"
+cov_zone_pages = "57/73"
+cov_zone_pages_pct = "78%"
+cov_fact_uncovered_omitted = "0.041"
+cov_fact_uncovered_clean = "0.022"
+cov_fact_ratio = "1.8"
+cov_fact_pointbiserial = "0.18"
