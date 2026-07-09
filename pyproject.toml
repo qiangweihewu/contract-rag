@@ -1,7 +1,9 @@
 [project]
 name = "contract-rag"
 version = "0.0.0"
-description = "Vertical contract-RAG cleaning & structured-extraction pipeline"
+description = "Cleaning + structured-extraction pipeline for dirty contract PDFs — sourced, verified, confidence-scored facts, benchmarked honestly on CUAD, Kleister-NDA, Tobacco800, FinCriticalED, and EDiTh."
+readme = "README.md"
+license = "Apache-2.0"
 requires-python = ">=3.12"
 dependencies = [
     "docling>=2.107.0",
@@ -39,6 +41,10 @@ eval = [
 ]
 benchmark = ["matplotlib>=3.8"]
 site = ["markdown>=3.5"]
+
+[project.urls]
+Homepage = "https://contractrag.com"
+Repository = "https://github.com/qiangweihewu/contract-rag"
 
 [build-system]
 requires = ["hatchling"]
