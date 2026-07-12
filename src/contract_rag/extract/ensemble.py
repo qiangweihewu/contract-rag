@@ -38,13 +38,19 @@ because `ensemble` is a brand-new backend with no existing byte-identical-output
 contract to preserve (unlike `rule`/`constrained`/etc., whose output must stay
 unchanged) — set `reattribute=False` to disable.
 
-Honesty note: the ensemble's headline field-F1 has NOT been measured end-to-end
-(the `constrained` child needs the GPU/Ollama rig used for the standalone
-`constrained` run). The per-field routing table is a reasonable prior built
-directly from that measured table, but the ensemble's own accuracy — including
-whether fallback/re-attribution help or hurt in aggregate — is unverified. The
-unit tests in `tests/test_ensemble.py` prove composition (routing, fallback
-counting, env parsing, vertical genericity) with fake children, not accuracy.
+Measured end-to-end (2026-07-12, 40-doc CUAD, `openai` gpt-5.5 as the LLM child;
+counterparty/governing_law/termination_notice_days/auto_renewal -> openai,
+effective_date/total_value -> rule): field-F1 0.692 (CI95 [0.640, 0.743]) vs
+rule 0.676 — +0.016, paired permutation p=0.615, statistically indistinguishable
+on the blended metric — but per-field-on-labeled every routed field lands at or
+above its best parent: counterparty 0.949 (rule 0.49), governing_law 0.939,
+auto_renewal 0.706, termination_notice_days 0.545, effective_date 0.938
+(preserved via rule + fallback). Fallback fired on 14 fields (effective_date 9,
+termination 5); re-attribution fired 0 times because gpt-5.5 cited perfectly
+(wrong_span 0, source-accuracy 0.994) — its value awaits a `constrained` child,
+whose standalone run had 16 wrong_span cases. The blended-F1 flatness is gold
+sparsity + LLM invention on unlabeled docs (13 vs rule's 8), not routing
+failure. The `constrained`-child pairing still needs the GPU/Ollama rig.
 """
 from __future__ import annotations
 
