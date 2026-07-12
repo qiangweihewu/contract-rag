@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field
 
-Backend = Literal["fake", "rule", "openai", "local", "mlx", "constrained"]
+Backend = Literal["fake", "rule", "openai", "local", "mlx", "constrained", "ensemble"]
 
 
 class Settings(BaseModel):
@@ -25,6 +25,9 @@ class Settings(BaseModel):
     # so an existing LOCAL_ENDPOINT setup needs no extra config.
     constrained_endpoint: str | None = None
     constrained_model: str | None = None
+    # ensemble backend: per-field routing override, "field=backend,field2=backend2"
+    # (see extract/ensemble.py:parse_routing_env). None -> DEFAULT_ROUTING only.
+    ensemble_routing: str | None = None
     vlm_endpoint: str | None = None
     vlm_timeout: int = 1200
     franken_bin: str | None = None  # path/name of the focr CPU-only OCR binary
@@ -78,6 +81,7 @@ def get_settings() -> Settings:
         mlx_model=os.environ.get("MLX_MODEL", "qwen3"),
         constrained_endpoint=os.environ.get("CONSTRAINED_ENDPOINT"),
         constrained_model=os.environ.get("CONSTRAINED_MODEL"),
+        ensemble_routing=os.environ.get("ENSEMBLE_ROUTING"),
         data_dir=Path(os.environ.get("DATA_DIR", "data")),
         golden_set_dir=Path(os.environ.get("GOLDEN_SET_DIR", "golden_set")),
         cuad_dir=Path(os.environ.get("CUAD_DIR", "cuad")),

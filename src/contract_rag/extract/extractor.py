@@ -154,6 +154,11 @@ def get_extractor(settings: Settings, vertical: Vertical | None = None) -> Extra
         # (local endpoint, document never leaves). Lazy import keeps this module light.
         from contract_rag.extract.constrained import ConstrainedExtractor
         return ConstrainedExtractor(settings, vertical)
+    if settings.extract_backend == "ensemble":
+        # Field-level ensemble over two (default rule + constrained) child backends;
+        # each child is built + gated the same way get_extractor would build it directly.
+        from contract_rag.extract.ensemble import EnsembleExtractor
+        return EnsembleExtractor(settings, vertical)
     if settings.extract_backend == "fake":
         return FakeExtractor(vertical.empty_facts())
     raise NotImplementedError(f"extract_backend={settings.extract_backend!r} not available")
