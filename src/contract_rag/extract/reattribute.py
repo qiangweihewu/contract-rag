@@ -6,6 +6,9 @@ shows `wrong_span` — the extracted *value* is correct but the cited
 wrong_span cases on the 40-doc CUAD run). Attribution is the product's core
 guarantee, so a wrong citation is worth repairing when the true source block can
 be found deterministically, rather than quarantining an otherwise-correct value.
+(Measured in anger 2026-07-12 inside the constrained-child ensemble on the
+A100/Ollama rig: 9 repairs fired; that run's taxonomy showed wrong_span 1 /
+source-accuracy 0.951 vs the standalone constrained run's 16 / 0.702.)
 
 `reattribute_facts` is a pure IR-in/facts-in, facts-out/counts-out function: for
 every populated `ExtractedClause` whose cited block does NOT contain its value

@@ -50,7 +50,18 @@ termination 5); re-attribution fired 0 times because gpt-5.5 cited perfectly
 (wrong_span 0, source-accuracy 0.994) — its value awaits a `constrained` child,
 whose standalone run had 16 wrong_span cases. The blended-F1 flatness is gold
 sparsity + LLM invention on unlabeled docs (13 vs rule's 8), not routing
-failure. The `constrained`-child pairing still needs the GPU/Ollama rig.
+failure.
+
+Also measured with the `constrained` child (same day, A100/Ollama qwen2.5:32b,
+DEFAULT_ROUTING): field-F1 0.695 (CI95 [0.622, 0.758]) — statistically level
+with both rule (p=0.491) and the gpt-5.5-child ensemble (p=0.930), i.e. the
+fully-LOCAL ensemble matches the external-API ensemble on the blended metric.
+The structural win is attribution: ensemble source-accuracy 0.951 / wrong_span 1
+vs the standalone constrained run's 0.702 / wrong_span 16 — rule-routed fields
+attribute by construction and the re-attribution post-pass repaired 9 citations
+in anger. Known routing-table wart: DEFAULT_ROUTING sends
+termination_notice_days to rule (0.364 on-labeled) though constrained scored
+0.455 both standalone runs — flipping it is a measured future tune.
 """
 from __future__ import annotations
 
