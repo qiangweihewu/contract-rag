@@ -21,6 +21,12 @@ class QualityReport(BaseModel):
     # scores are byte-identical whether or not coverage is attached.
     ink_coverage: float | None = None
     uncovered_ink_ratio: float | None = None
+    # Layout-model omission signal (clean/layout_coverage.py) — the finer-grained
+    # sibling of ink_coverage: fraction of layout-detector regions left unfilled by
+    # OCR blocks. Same additive contract: None unless annotate_report_layout runs,
+    # never enters quality_score.
+    layout_omission_score: float | None = None
+    n_uncovered_regions: int | None = None
 
 
 def is_garbled(text: str) -> bool:
