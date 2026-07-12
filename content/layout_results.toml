@@ -1,0 +1,32 @@
+# Point-in-time measured results for the layout-model coverage signal, injected
+# into content/layout-coverage.{en,zh}.md at site-build time via the static-token
+# auto-merge (single source of truth for both language versions). NOT recomputed
+# at build time: the datasets are download-gated and never committed, and layout
+# inference is slow (disk-cached per page under LAYOUT_REGIONS_CACHE). Reproduce:
+#   uv run python -m contract_rag.eval.layout_coverage   (run 2026-07-12)
+# Baseline tokens referenced by the same articles (cov_*, fin_*) live in
+# content/fincritical_results.toml — shared token namespace, never duplicated.
+# All values as strings so the published formatting is exact.
+
+layout_measured_date = "2026-07-12"
+
+# FinCriticalED: layout-region omission score vs expert fact-level omission
+# (85 cached paddleocr page IRs, 21 pages with >=1 omitted gold fact).
+layout_fin_n_pages = "85"
+layout_fin_pages_omitted = "21"
+layout_fin_mean_omitted = "0.095"
+layout_fin_mean_clean = "0.031"
+layout_fin_mean_ratio = "3"
+layout_fin_pointbiserial = "0.136"
+layout_fin_pearson = "-0.058"
+
+# Tobacco800 GEDI: layout-region OCR fill inside annotated signature/logo zones
+# vs elsewhere (57 pages with zones).
+layout_gedi_pages = "57"
+layout_gedi_fill_in = "0.503"
+layout_gedi_fill_out = "0.866"
+layout_gedi_uncov_in = "0.495"
+layout_gedi_uncov_out = "0.044"
+layout_gedi_ratio = "11"
+layout_gedi_pages_lower = "45/57"
+layout_gedi_pages_pct = "79%"
