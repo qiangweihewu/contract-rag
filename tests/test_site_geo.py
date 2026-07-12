@@ -98,3 +98,17 @@ def test_social_meta_has_og_and_twitter_tags_escaped_and_localized():
                           lang="zh", og_type="website")
     assert 'property="og:locale" content="zh_CN"' in zh_tags
     assert 'property="og:type" content="website"' in zh_tags
+
+
+def test_social_meta_image_upgrades_to_large_card():
+    """With an `image`, social_meta adds the og:image/twitter:image pair and
+    upgrades the Twitter card to summary_large_image; the plain-summary card
+    (asserted above) remains the imageless default."""
+    tags = social_meta(title="T", description="D", url="https://contractrag.com/x.html",
+                       lang="en", image="https://contractrag.com/og.png")
+    assert 'property="og:image" content="https://contractrag.com/og.png"' in tags
+    assert 'property="og:image:width" content="1200"' in tags
+    assert 'property="og:image:height" content="630"' in tags
+    assert '<meta name="twitter:card" content="summary_large_image">' in tags
+    assert '<meta name="twitter:image" content="https://contractrag.com/og.png">' in tags
+    assert 'content="summary"' not in tags

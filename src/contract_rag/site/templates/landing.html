@@ -51,7 +51,11 @@ ${analytics}
     display: flex; align-items: center; justify-content: space-between;
     padding: 1rem 0;
   }
-  .brand { font-weight: 700; letter-spacing: -.01em; color: var(--fg); text-decoration: none; }
+  .brand {
+    font-weight: 700; letter-spacing: -.01em; color: var(--fg); text-decoration: none;
+    display: inline-flex; align-items: center; gap: .55rem;
+  }
+  .brand svg.mark { display: block; flex: none; }
   nav.top a { color: var(--fg-muted); text-decoration: none; margin-left: 1.25rem; font-size: .9rem; }
   nav.top a:hover { color: var(--accent); }
   section.hero { padding: 4rem 0 3rem; }
@@ -117,7 +121,7 @@ ${analytics}
 <body>
 <header class="site">
   <div class="container bar">
-    <a class="brand" href="${canonical}">contract-rag</a>
+    <a class="brand" href="${canonical}">${logo_mark}contract-rag</a>
     <nav class="top">
       <a href="#evidence">${evidence_heading}</a>
       <a href="${lang_switch_href}">${lang_switch_label}</a>

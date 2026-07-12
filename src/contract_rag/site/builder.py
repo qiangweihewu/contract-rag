@@ -184,21 +184,54 @@ def _render_article_research_nav(pages: list[PageMeta], this: PageMeta, base: st
     return f'<nav class="research-nav"><h2>{heading}</h2><ul>\n{items}\n</ul></nav>'
 
 
+# The brand mark: a document dissolving into pixels on its left edge (dirty
+# scan in), resolving into clean text lines with the extracted fact
+# highlighted in green. Same geometry as `LOGO_MARK_SVG` below, simplified and
+# thickened so it stays legible at 16px on a navy tile.
 _FAVICON_SVG = (
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
-    '<rect width="64" height="64" rx="14" fill="#1a7f5e"/>'
-    '<text x="32" y="45" font-family="-apple-system,BlinkMacSystemFont,'
-    "'Segoe UI',Roboto,Helvetica,Arial,sans-serif\" font-size=\"34\" "
-    'font-weight="700" fill="#ffffff" text-anchor="middle">C</text>'
-    "</svg>\n"
+    '<rect width="64" height="64" rx="14" fill="#0f1b2d"/>'
+    '<path d="M26 10h18l10 10v34H26Z" fill="#f5f6f4"/>'
+    '<path d="M44 10v10h10Z" fill="#9aa7b4"/>'
+    '<rect x="31" y="26" width="18" height="4" fill="#0f1b2d"/>'
+    '<rect x="31" y="33" width="18" height="4" fill="#1fa365"/>'
+    '<rect x="31" y="40" width="18" height="4" fill="#0f1b2d"/>'
+    '<rect x="31" y="47" width="12" height="4" fill="#0f1b2d"/>'
+    '<g fill="#f5f6f4">'
+    '<rect x="18" y="14" width="5" height="5"/><rect x="9" y="21" width="4" height="4"/>'
+    '<rect x="16" y="28" width="4" height="4"/><rect x="8" y="34" width="5" height="5"/>'
+    '<rect x="17" y="40" width="5" height="5"/><rect x="10" y="47" width="4" height="4"/>'
+    '<rect x="20" y="52" width="4" height="4"/>'
+    "</g></svg>\n"
 )
 
 
 def favicon_svg() -> str:
-    """Tiny self-contained favicon: a dark-green rounded square with a white
-    "C", matching the landing page's `--accent` color (#1a7f5e). Pure string,
-    no image-library dependency."""
+    """Tiny self-contained favicon: the pixel-dissolve document brand mark
+    (dirty pixels resolving into a clean page with a green extracted-fact
+    line) on a navy tile. Pure string, no image-library dependency."""
     return _FAVICON_SVG
+
+
+# Header-sized variant of the same mark, drawn with `currentColor` for the
+# page/pixels and the site's `--accent` CSS variable for the highlighted fact
+# line, so it follows the landing page's light/dark theme automatically.
+LOGO_MARK_SVG = (
+    '<svg class="mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" '
+    'width="26" height="26" aria-hidden="true">'
+    '<path d="M26 8h17l12 12v36H26Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>'
+    '<path d="M43 8v12h12" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>'
+    '<rect x="32" y="26" width="17" height="3.5" fill="currentColor"/>'
+    '<rect x="32" y="33" width="17" height="3.5" fill="var(--accent, #1fa365)"/>'
+    '<rect x="32" y="40" width="17" height="3.5" fill="currentColor"/>'
+    '<rect x="32" y="47" width="11" height="3.5" fill="currentColor"/>'
+    '<g fill="currentColor">'
+    '<rect x="17" y="12" width="5" height="5"/><rect x="8" y="19" width="4" height="4"/>'
+    '<rect x="15" y="26" width="4" height="4"/><rect x="7" y="33" width="5" height="5"/>'
+    '<rect x="16" y="39" width="5" height="5"/><rect x="9" y="46" width="4" height="4"/>'
+    '<rect x="19" y="52" width="4" height="4"/>'
+    "</g></svg>"
+)
 
 
 def load_landing_content(path: Path | str, tokens: dict[str, str]) -> LandingContent:
@@ -249,8 +282,15 @@ def _render_research(pages: list[PageMeta], lang: str, base: str) -> str:
     )
 
 
+def _static_dir() -> Path:
+    """Committed binary site assets (the og-image banner) shipped inside the
+    package next to `templates/`; copied verbatim to the output root."""
+    return Path(str(resources.files("contract_rag.site").joinpath("static")))
+
+
 def render_landing(tokens: dict[str, str], lang: str, pages: list[PageMeta], *,
-                   content_dir: Path | str, base_url: str, analytics: str = "") -> str:
+                   content_dir: Path | str, base_url: str, analytics: str = "",
+                   og_image: str | None = None) -> str:
     """Render the bilingual product landing page (`index.html` / `zh/index.html`).
     Loads `content/landing.{lang}.toml`, substitutes every `{{ token }}`, and
     fills `templates/landing.html`. `pages` are the existing article pages,
@@ -272,10 +312,11 @@ def render_landing(tokens: dict[str, str], lang: str, pages: list[PageMeta], *,
                              github_url=content.github_url, faq=content.faq)
     cta_mailto = f"mailto:{content.cta_email}?subject={quote(content.cta_text)}"
     social = social_meta(title=content.title, description=content.description,
-                         url=canonical, lang=lang, og_type="website")
+                         url=canonical, lang=lang, og_type="website", image=og_image)
 
     tmpl = _landing_template()
     return tmpl.substitute(
+        logo_mark=LOGO_MARK_SVG,
         lang=lang, title=content.title, description=content.description,
         canonical=canonical, hreflang=hreflang, analytics=analytics, social=social,
         jsonld=json.dumps(jsonld, ensure_ascii=False),
@@ -335,6 +376,12 @@ def build_site(content_dir, out_dir, *, base_url: str,
         tokens.update(benchmark_tokens(benchmark))
     tmpl = _template()
 
+    # The shared social-preview banner ships as a committed package asset; when
+    # present it is copied to the output root and every page's OG/Twitter tags
+    # point at it. Without it (banner removed), output is as before the banner.
+    static_dir = _static_dir()
+    og_image = f"{base}/og.png" if (static_dir / "og.png").exists() else None
+
     parsed = [parse_front_matter(p.read_text()) for p in sorted(content_dir.glob("*.md"))]
     metas = [m for m, _ in parsed]
     written: list[Path] = []
@@ -354,7 +401,8 @@ def build_site(content_dir, out_dir, *, base_url: str,
         body = _substitute_tokens(body, tokens)
         html_body = markdown.markdown(body, extensions=["extra", "toc", "sane_lists"])
         social = social_meta(title=meta.title, description=meta.description,
-                             url=meta.canonical, lang=meta.lang, og_type="article")
+                             url=meta.canonical, lang=meta.lang, og_type="article",
+                             image=og_image)
         page_html = tmpl.substitute(
             lang=meta.lang, title=meta.title, description=meta.description,
             canonical=meta.canonical, hreflang=_hreflang(metas, meta), analytics=analytics,
@@ -382,14 +430,21 @@ def build_site(content_dir, out_dir, *, base_url: str,
     favicon.write_text(favicon_svg())
     written.append(favicon)
 
+    if static_dir.is_dir():
+        for asset in sorted(static_dir.iterdir()):
+            if asset.is_file():
+                dest = out_dir / asset.name
+                shutil.copyfile(asset, dest)
+                written.append(dest)
+
     # additive: content dirs without landing.{en,zh}.toml (all existing tests,
     # any future minimal fixture) keep getting the old auto-index, byte-identical.
     sitemap_pages = list(metas)
     if has_landing:
         en_html = render_landing(tokens, "en", metas, content_dir=content_dir,
-                                 base_url=base_url, analytics=analytics)
+                                 base_url=base_url, analytics=analytics, og_image=og_image)
         zh_html = render_landing(tokens, "zh", metas, content_dir=content_dir,
-                                 base_url=base_url, analytics=analytics)
+                                 base_url=base_url, analytics=analytics, og_image=og_image)
 
         index = out_dir / "index.html"
         index.write_text(en_html)

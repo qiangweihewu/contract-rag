@@ -83,13 +83,17 @@ def landing_json_ld(*, name: str, url: str, description: str, github_url: str = 
 
 
 def social_meta(*, title: str, description: str, url: str, lang: str,
-                og_type: str = "article", site_name: str = "contract-rag") -> str:
+                og_type: str = "article", site_name: str = "contract-rag",
+                image: str | None = None) -> str:
     """Open Graph + Twitter Card `<meta>` tags for one page's `<head>` — pure
     string building, no I/O. `og:locale` derives from `lang` (`en`/`zh` ->
     `en_US`/`zh_CN`); `og:type` is `article` for content pages, `website` for
-    the landing page. Attribute values are HTML-escaped defensively (titles and
-    descriptions are prose without literal quotes today, but this is cheap
-    insurance against a future one that has them)."""
+    the landing page. `image` (an absolute URL, 1200x630) upgrades the Twitter
+    card to `summary_large_image` and adds the `og:image`/`twitter:image`
+    pair; without it the tags are byte-identical to before the banner existed.
+    Attribute values are HTML-escaped defensively (titles and descriptions are
+    prose without literal quotes today, but this is cheap insurance against a
+    future one that has them)."""
     locale = "zh_CN" if lang == "zh" else "en_US"
     esc_title = _html.escape(title, quote=True)
     esc_description = _html.escape(description, quote=True)
@@ -102,8 +106,18 @@ def social_meta(*, title: str, description: str, url: str, lang: str,
         f'<meta property="og:site_name" content="{esc_site_name}">',
         f'<meta property="og:type" content="{og_type}">',
         f'<meta property="og:locale" content="{locale}">',
-        '<meta name="twitter:card" content="summary">',
     ]
+    if image is not None:
+        esc_image = _html.escape(image, quote=True)
+        lines += [
+            f'<meta property="og:image" content="{esc_image}">',
+            '<meta property="og:image:width" content="1200">',
+            '<meta property="og:image:height" content="630">',
+            '<meta name="twitter:card" content="summary_large_image">',
+            f'<meta name="twitter:image" content="{esc_image}">',
+        ]
+    else:
+        lines.append('<meta name="twitter:card" content="summary">')
     return "\n".join(lines)
 
 

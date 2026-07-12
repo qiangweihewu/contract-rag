@@ -365,11 +365,27 @@ def test_build_site_articles_have_og_and_twitter_tags(tmp_path):
     assert 'property="og:site_name" content="contract-rag"' in html_en
     assert 'property="og:type" content="article"' in html_en
     assert 'property="og:locale" content="en_US"' in html_en
-    assert '<meta name="twitter:card" content="summary">' in html_en
+    # the packaged banner upgrades every page to a large-image card
+    assert 'property="og:image" content="https://contractrag.com/og.png"' in html_en
+    assert '<meta name="twitter:card" content="summary_large_image">' in html_en
 
     html_zh = (out / "a.zh.html").read_text()
     assert 'property="og:locale" content="zh_CN"' in html_zh
     assert 'property="og:type" content="article"' in html_zh
+
+
+def test_build_site_copies_static_banner(tmp_path):
+    """The packaged social-preview banner (site/static/og.png) is copied to the
+    output root so the og:image URL the pages advertise actually resolves."""
+    pytest.importorskip("markdown")
+    content = tmp_path / "content"
+    _write_multi_lang_content(content)
+    out = tmp_path / "site_out"
+    written = build_site(content, out, base_url="https://contractrag.com", now="2026-07-09")
+
+    og = out / "og.png"
+    assert og in written
+    assert og.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
 
 
 def test_build_site_datepublished_flows_into_json_ld(tmp_path):
@@ -405,7 +421,8 @@ def test_build_site_writes_favicon(tmp_path):
     svg = favicon_path.read_text()
     assert svg == favicon_svg()
     assert svg.startswith("<svg")
-    assert "#1a7f5e" in svg  # matches the landing page's --accent
+    assert "#0f1b2d" in svg  # the brand-mark navy tile
+    assert "#1fa365" in svg  # the green extracted-fact line
 
     for name in ("a.html", "a.zh.html", "b.html"):
         assert '<link rel="icon" type="image/svg+xml" href="/favicon.svg">' in (out / name).read_text()
