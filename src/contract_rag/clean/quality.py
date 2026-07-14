@@ -27,6 +27,12 @@ class QualityReport(BaseModel):
     # never enters quality_score.
     layout_omission_score: float | None = None
     n_uncovered_regions: int | None = None
+    # Dual-engine value-level omission signal (clean/crosscheck.py): critical
+    # tokens a verifier engine read that the primary parse never emitted.
+    # Same additive contract: None unless crosscheck.annotate_report runs,
+    # never enters quality_score.
+    crosscheck_missing_count: int | None = None
+    crosscheck_flagged: bool | None = None
 
 
 def is_garbled(text: str) -> bool:

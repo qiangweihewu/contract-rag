@@ -280,11 +280,26 @@ def degrade_pdf(
 
 # ============================================================ measurement harness
 
+def invented_token_ratio(ocr_text: str, original_text: str) -> float:
+    """Fraction of canonicalized OCR tokens absent from the canonicalized original
+    text — the hallucination direction omission-gold can't see. Uses fincritical's
+    two-sided canonicalizer so pure formatting never counts as invention while a
+    misread digit/sign/decimal does."""
+    from contract_rag.eval.fincritical import canon_fact_text
+
+    ocr_tokens = canon_fact_text(ocr_text).split()
+    if not ocr_tokens:
+        return 0.0
+    original = set(canon_fact_text(original_text).split())
+    return sum(t not in original for t in ocr_tokens) / len(ocr_tokens)
+
+
 class ColumnQuality(BaseModel):
     quality: QualityReport
     n_blocks: int
     field_f1: float | None = None
     source_accuracy: float | None = None
+    invented_ratio: float | None = None
 
 
 class DocResult(BaseModel):
@@ -295,12 +310,15 @@ class DocResult(BaseModel):
     cleaned: ColumnQuality
 
 
-def _column(ir: DocumentIR, f1: float | None, src: float | None) -> ColumnQuality:
+def _column(
+    ir: DocumentIR, f1: float | None, src: float | None, invented: float | None = None
+) -> ColumnQuality:
     return ColumnQuality(
         quality=compute_quality_score(ir),
         n_blocks=len(ir.blocks),
         field_f1=f1,
         source_accuracy=src,
+        invented_ratio=invented,
     )
 
 
@@ -328,12 +346,17 @@ def evaluate_doc(
         agg = aggregate([row], vertical)
         return round(agg["field_f1"], 3), round(agg["source_accuracy"], 3)
 
+    original_text = " ".join(b.text for b in original_ir.blocks)
+
+    def _inv(ir: DocumentIR) -> float:
+        return round(invented_token_ratio(" ".join(b.text for b in ir.blocks), original_text), 3)
+
     return DocResult(
         name=name,
         page_count=page_count,
         original=_column(original_ir, *_f1(original_ir)),
-        degraded=_column(degraded_ir, *_f1(degraded_ir)),
-        cleaned=_column(cleaned_ir, *_f1(cleaned_ir)),
+        degraded=_column(degraded_ir, *_f1(degraded_ir), invented=_inv(degraded_ir)),
+        cleaned=_column(cleaned_ir, *_f1(cleaned_ir), invented=_inv(cleaned_ir)),
     )
 
 
@@ -344,6 +367,7 @@ class ColumnSummary(BaseModel):
     needs_review_rate: float
     field_f1: float | None = None
     source_accuracy: float | None = None
+    mean_invented: float | None = None
 
 
 class Summary(BaseModel):
@@ -358,6 +382,8 @@ class Summary(BaseModel):
 
 def _column_summary(cols: list[ColumnQuality], f1: float | None, src: float | None) -> ColumnSummary:
     n = len(cols)
+    invs = [c.invented_ratio for c in cols if c.invented_ratio is not None]
+    mean_invented = round(sum(invs) / len(invs), 3) if invs else None
     return ColumnSummary(
         mean_quality=round(sum(c.quality.quality_score for c in cols) / n, 3),
         mean_garble=round(sum(c.quality.garble_ratio for c in cols) / n, 3),
@@ -365,6 +391,7 @@ def _column_summary(cols: list[ColumnQuality], f1: float | None, src: float | No
         needs_review_rate=round(sum(c.quality.needs_review for c in cols) / n, 3),
         field_f1=f1,
         source_accuracy=src,
+        mean_invented=mean_invented,
     )
 
 
@@ -401,7 +428,7 @@ def format_report(results: list[DocResult], summary: Summary) -> str:
         f"=== image-level degradation (level={summary.level} seed={summary.seed}"
         f" render_dpi={summary.render_dpi}) ===",
         f"{'doc':<30} {'pg':>3} {'orig':>6} {'degr':>6} {'clean':>6}"
-        f" {'oF1':>5} {'dF1':>5} {'cF1':>5}",
+        f" {'oF1':>5} {'dF1':>5} {'cF1':>5} {'dInv':>5}",
     ]
     for r in results:
         lines.append(
@@ -410,13 +437,13 @@ def format_report(results: list[DocResult], summary: Summary) -> str:
             f" {r.degraded.quality.quality_score:>6.3f}"
             f" {r.cleaned.quality.quality_score:>6.3f}"
             f" {_f(r.original.field_f1):>5} {_f(r.degraded.field_f1):>5}"
-            f" {_f(r.cleaned.field_f1):>5}"
+            f" {_f(r.cleaned.field_f1):>5} {_f(r.degraded.invented_ratio):>5}"
         )
     lines += [
         "",
         f"docs={summary.n_docs}",
         f"{'column':<10} {'quality':>8} {'garble':>7} {'conf':>6} {'review%':>8}"
-        f" {'field_f1':>9} {'src_acc':>8}",
+        f" {'field_f1':>9} {'src_acc':>8} {'invented':>9}",
     ]
     for label, side in (
         ("original", summary.original),
@@ -427,6 +454,7 @@ def format_report(results: list[DocResult], summary: Summary) -> str:
             f"{label:<10} {side.mean_quality:>8.3f} {side.mean_garble:>7.3f}"
             f" {side.mean_confidence:>6.3f} {side.needs_review_rate:>8.1%}"
             f" {_f(side.field_f1, p=3):>9} {_f(side.source_accuracy, p=3):>8}"
+            f" {_f(side.mean_invented, p=3):>9}"
         )
     return "\n".join(lines)
 

@@ -20,6 +20,7 @@ def test_parse_with_vlm_against_live_endpoint(tmp_path: Path):
     c.drawString(72, 720, "Master Services Agreement")
     c.drawString(72, 700, "Governing law: New York.")
     c.save()
-    ir = parse_with_vlm(pdf, Settings(vlm_endpoint=VLM_ENDPOINT))
+    settings = Settings(vlm_endpoint=VLM_ENDPOINT)
+    ir = parse_with_vlm(pdf, settings)
     assert len(ir.blocks) > 0
-    assert all(b.source_engine == "unlimited-ocr" for b in ir.blocks)
+    assert all(b.source_engine == settings.vlm_model for b in ir.blocks)

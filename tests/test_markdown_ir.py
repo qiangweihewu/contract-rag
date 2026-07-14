@@ -46,3 +46,19 @@ def test_heading_nesting_sets_parent_id():
     title = next(b for b in blocks if b.type is BlockType.TITLE)
     heading = next(b for b in blocks if b.type is BlockType.HEADING)
     assert heading.parent_id == title.block_id
+
+
+def test_markdown_to_blocks_engine_and_prefix_params():
+    blocks = markdown_to_blocks(
+        "# Title\n\nBody para.", engine="dots.ocr", id_prefix="#/vlm/p2"
+    )
+    assert [b.block_id for b in blocks] == ["#/vlm/p2/0", "#/vlm/p2/1"]
+    assert all(b.source_engine == "dots.ocr" for b in blocks)
+    # parent link uses the prefixed id
+    assert blocks[1].parent_id == "#/vlm/p2/0"
+
+
+def test_markdown_to_blocks_defaults_unchanged():
+    blocks = markdown_to_blocks("# Title\n\nBody para.")
+    assert [b.block_id for b in blocks] == ["#/vlm/0", "#/vlm/1"]
+    assert all(b.source_engine == "unlimited-ocr" for b in blocks)

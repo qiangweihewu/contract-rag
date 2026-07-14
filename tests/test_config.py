@@ -194,3 +194,22 @@ def test_get_settings_loads_dotenv_from_cwd(tmp_path, monkeypatch):
 
     assert s.extract_backend == "openai"
     assert s.allow_external_llm is True
+
+
+def test_vlm_model_prompt_rawdir_defaults(monkeypatch):
+    for var in ("VLM_MODEL", "VLM_PROMPT", "VLM_RAW_DIR"):
+        monkeypatch.delenv(var, raising=False)
+    s = get_settings()
+    assert s.vlm_model == "Unlimited-OCR"
+    assert s.vlm_prompt == "Multi page parsing."
+    assert s.vlm_raw_dir is None
+
+
+def test_vlm_model_prompt_rawdir_env_override(monkeypatch, tmp_path):
+    monkeypatch.setenv("VLM_MODEL", "dots.ocr")
+    monkeypatch.setenv("VLM_PROMPT", "Extract this page as markdown.")
+    monkeypatch.setenv("VLM_RAW_DIR", str(tmp_path / "raw"))
+    s = get_settings()
+    assert s.vlm_model == "dots.ocr"
+    assert s.vlm_prompt == "Extract this page as markdown."
+    assert s.vlm_raw_dir == tmp_path / "raw"

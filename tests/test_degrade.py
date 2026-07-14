@@ -265,3 +265,31 @@ def test_format_report_has_columns_and_docs():
     assert "mydoc" in out
     assert "original" in out and "degraded" in out and "cleaned" in out
     assert "level=fax" in out
+
+
+# ------------------------------------------------------------- invented_token_ratio
+
+from contract_rag.eval.degrade import invented_token_ratio
+
+
+def test_invented_token_ratio_formatting_only_is_zero():
+    # case, thousands separators, currency symbols are canonicalized away
+    assert invented_token_ratio("Total $1,200 USD", "total 1200 usd") == 0.0
+
+
+def test_invented_token_ratio_counts_misread_digits():
+    # OCR says 13000 where the original said 12000: 1 invented token of 2
+    assert invented_token_ratio("total 13000", "total 12000") == 0.5
+
+
+def test_invented_token_ratio_empty_ocr_is_zero():
+    assert invented_token_ratio("", "anything at all") == 0.0
+
+
+def test_evaluate_doc_populates_invented_ratio_for_degraded_and_cleaned():
+    original = _ir([("alpha beta", 1.0)])
+    noisy = _ir([("alpha zorp", 1.0)])
+    r = evaluate_doc("d", original, noisy, page_count=1)
+    assert r.original.invented_ratio is None
+    assert r.degraded.invented_ratio == 0.5
+    assert r.cleaned.invented_ratio is not None

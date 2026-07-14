@@ -29,7 +29,15 @@ class Settings(BaseModel):
     # (see extract/ensemble.py:parse_routing_env). None -> DEFAULT_ROUTING only.
     ensemble_routing: str | None = None
     vlm_endpoint: str | None = None
+    vlm_model: str = "Unlimited-OCR"
+    vlm_prompt: str = "Multi page parsing."
+    vlm_raw_dir: Path | None = None
     vlm_timeout: int = 1200
+    # cap per-page generation; None omits the field (server default). Guards against
+    # OCR-VLM repetition loops on degraded/noisy pages (measured: 100k+ junk tokens,
+    # 20-30 min/page uncapped); real page markdown is 1-3k tokens so a generous cap
+    # cannot alter a non-looping parse.
+    vlm_max_tokens: int | None = None
     franken_bin: str | None = None  # path/name of the focr CPU-only OCR binary
     text_coverage_threshold: float = 0.8
     redact_pii: bool = True
@@ -87,7 +95,15 @@ def get_settings() -> Settings:
         cuad_dir=Path(os.environ.get("CUAD_DIR", "cuad")),
         kleister_dir=Path(os.environ.get("KLEISTER_DIR", "kleister-nda")),
         vlm_endpoint=os.environ.get("VLM_ENDPOINT"),
+        vlm_model=os.environ.get("VLM_MODEL", "Unlimited-OCR"),
+        vlm_prompt=os.environ.get("VLM_PROMPT", "Multi page parsing."),
+        vlm_raw_dir=(
+            Path(os.environ["VLM_RAW_DIR"]) if os.environ.get("VLM_RAW_DIR") else None
+        ),
         vlm_timeout=int(os.environ.get("VLM_TIMEOUT", "1200")),
+        vlm_max_tokens=(
+            int(os.environ["VLM_MAX_TOKENS"]) if os.environ.get("VLM_MAX_TOKENS") else None
+        ),
         franken_bin=os.environ.get("FRANKEN_BIN"),
         text_coverage_threshold=float(os.environ.get("TEXT_COVERAGE_THRESHOLD", "0.8")),
         redact_pii=_env_bool("REDACT_PII", True),

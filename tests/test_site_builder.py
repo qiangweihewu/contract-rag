@@ -170,6 +170,27 @@ def test_real_content_dir_builds_with_all_tokens_resolved(tmp_path):
         assert "{{" not in (out / page).read_text(), page
 
 
+def test_vision_ocr_article_tokens_resolve_in_both_languages(tmp_path):
+    """Article pair #6 (vision-ocr): vision_ocr_results.toml tokens render in
+    both languages, and no `{{ vo_` placeholder survives anywhere in the built
+    site (mirrors the kleister-nda static-token checks in
+    test_real_content_dir_builds_with_all_tokens_resolved above)."""
+    pytest.importorskip("markdown")
+    repo = Path(__file__).resolve().parent.parent
+    content = repo / "content"
+    tokens: dict[str, str] = {}
+    for path in sorted(content.glob("*.toml")):
+        tokens.update(load_static_tokens(path))
+    out = tmp_path / "site_out"
+    build_site(content, out, base_url="https://x.github.io/contract-rag",
+               benchmark=run_nda_benchmark(seed=0), static_tokens=tokens)
+    for page in ("vision-ocr.html", "vision-ocr.zh.html"):
+        html = (out / page).read_text()
+        assert "3.85%" in html                       # vo_rubric_bar, a distinctive value
+    for page in sorted(out.glob("*.html")):
+        assert "{{ vo_" not in page.read_text(), page.name
+
+
 def test_robots_txt_allows_all_and_invites_ai_crawlers():
     text = robots_txt(base_url="https://contractrag.com")
     assert "User-agent: *" in text

@@ -1,0 +1,62 @@
+# Point-in-time measured results for the vision-OCR (VLM) adoption measurement,
+# injected into content/vision-ocr.{en,zh}.md at site-build time via the
+# static-token auto-merge (single source of truth for both language versions).
+# NOT recomputed at build time: the GPU rig is rented-and-terminated and the
+# underlying datasets (FinCriticalED, CUAD degrade renders) are download-gated
+# and never committed. Reproduce (Lambda A100-40GB, vLLM, ~6.2 GPU-hours total):
+#   uv run python scripts/measure_vision_ocr.py --model dots    (run 2026-07-13)
+#   uv run python scripts/measure_vision_ocr.py --model dsocr   (run 2026-07-13)
+#   uv run python -m contract_rag.eval.crosscheck                (run 2026-07-14, offline, cached IRs only)
+# Baseline paddle FinCriticalED tokens (fin_*) live in content/fincritical_results.toml
+# — shared token namespace, never duplicated; verified against it here.
+# All values as strings so the published formatting is exact.
+
+vo_measured_date = "2026-07-13"
+vo_gpu = "Lambda A100-40GB, vLLM 0.11.2, ~6.2 GPU-hours"
+
+# FinCriticalED (85 gold pages, 491 expert facts) — omission rate by engine.
+vo_fin_paddle_omission = "7.7%"
+vo_fin_dots_omission = "5.9%"
+vo_fin_dsocr_omission = "13.2%"
+vo_fin_paddle_number = "8.3%"
+vo_fin_dots_number_omitted = "0"
+vo_fin_dots_number_n = "72"
+vo_fin_dots_temporal = "8.8%"
+vo_fin_dsocr_number = "31.9%"
+vo_fin_quality_all = "0.998–1.0"
+
+# degrade ladder (5 docs x first 3 pages, seed 0, paddle-slice-matched) — field-F1.
+vo_deg_n_docs = "5"
+vo_deg_n_pages = "3"
+vo_deg_f1_light_paddle = "0.26"
+vo_deg_f1_light_dots = "0.32"
+vo_deg_f1_medium_paddle = "0.16"
+vo_deg_f1_medium_dots = "0.24"
+
+# invented_token_ratio (hallucination direction, vs original digital page text).
+vo_inv_fax_paddle = "0.97"
+vo_inv_fax_dots = "0.107"
+vo_inv_shred_paddle = "0.85"
+vo_inv_shred_dots = "0.0"
+vo_inv_shred_dsocr = "0.70"
+vo_quality_fax_paddle = "0.92"
+vo_quality_shred_dsocr = "1.0"
+
+# rubric + operations
+vo_rubric_bar = "3.85%"
+vo_latency_vlm = "5–22 s/page (A100)"
+vo_latency_paddle = "1–2 s/page (CPU)"
+vo_loop_tokens = "100k+"
+vo_loop_minutes = "20–30"
+
+# dual-engine crosscheck (paddle primary / dots.ocr verifier, offline over
+# cached FinCriticalED IRs; measure_vision_ocr_results/crosscheck.json, run 2026-07-14).
+# Pre-registered bar: fact-level flag-recall >= 0.5 AND page-level false-alarm <= 0.2.
+vo_cc_bar = "recall ≥ 50% @ false-alarm ≤ 20%"
+vo_cc_n_omissions = "38"
+vo_cc_recall = "0.184"
+vo_cc_false_alarm = "0.152"
+vo_cc_verdict = "FAIL"
+vo_cc_digit_recall = "0.875"
+vo_cc_number_caught = "6/6"
+vo_cc_entity_caught = "0/27"

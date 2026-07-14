@@ -90,3 +90,89 @@ def test_extract_markdown_raises_clear_error_on_malformed_shape():
     resp = _FakeResponse({"unexpected": "shape"})
     with pytest.raises(ValueError, match="unexpected VLM response shape"):
         _extract_markdown(resp)
+
+
+from contract_rag.parse.vlm_parser import parse_with_vlm
+
+
+class _FakeResp:
+    def __init__(self, content: str):
+        self._content = content
+
+    def raise_for_status(self):
+        pass
+
+    def json(self):
+        return {"choices": [{"message": {"content": self._content}}]}
+
+
+def _settings(**kw):
+    from contract_rag.config import Settings
+    return Settings(vlm_endpoint="http://fake/v1", **kw)
+
+
+def test_parse_with_vlm_one_request_per_page_and_model_passthrough(tmp_path):
+    pdf = tmp_path / "doc.pdf"
+    pdf.write_bytes(b"%PDF-fake")
+    calls: list[dict] = []
+
+    def fake_post(url, json=None, timeout=None):
+        calls.append(json)
+        return _FakeResp(f"# Page {len(calls)}\n\ntext {len(calls)}")
+
+    ir = parse_with_vlm(
+        pdf,
+        _settings(vlm_model="dots.ocr", vlm_prompt="Read the page."),
+        post_fn=fake_post,
+        render_fn=lambda p: ["b64page1", "b64page2"],
+    )
+    assert len(calls) == 2                       # one request per page
+    assert all(c["model"] == "dots.ocr" for c in calls)
+    assert calls[0]["messages"][0]["content"][0]["text"] == "Read the page."
+    # exactly one image per request
+    assert sum(p["type"] == "image_url" for p in calls[0]["messages"][0]["content"]) == 1
+    # page-prefixed unique ids, model-stamped engine, reading order preserved
+    assert ir.blocks[0].block_id.startswith("#/vlm/p1/")
+    assert any(b.block_id.startswith("#/vlm/p2/") for b in ir.blocks)
+    assert all(b.source_engine == "dots.ocr" for b in ir.blocks)
+    assert "Page 1" in ir.blocks[0].text
+
+
+def test_parse_with_vlm_writes_raw_pages_when_dir_set(tmp_path):
+    pdf = tmp_path / "doc.pdf"
+    pdf.write_bytes(b"%PDF-fake")
+    raw = tmp_path / "raw"
+
+    ir = parse_with_vlm(
+        pdf,
+        _settings(vlm_model="m", vlm_raw_dir=raw),
+        post_fn=lambda url, json=None, timeout=None: _FakeResp("# H\n\np"),
+        render_fn=lambda p: ["only-page"],
+    )
+    saved = raw / "doc" / "page_0001.md"
+    assert saved.read_text() == "# H\n\np"
+    assert ir.blocks  # parse still succeeded
+
+
+def test_post_vlm_request_includes_max_tokens_only_when_set():
+    from contract_rag.parse.vlm_parser import _post_vlm_request
+
+    seen = []
+
+    def fake_post(url, json=None, timeout=None):
+        seen.append(json)
+
+        class R:
+            def raise_for_status(self):
+                pass
+
+        return R()
+
+    from contract_rag.config import Settings
+
+    _post_vlm_request(Settings(vlm_endpoint="http://x/v1"), content=[], post_fn=fake_post)
+    assert "max_tokens" not in seen[0]  # default None -> payload unchanged
+    _post_vlm_request(
+        Settings(vlm_endpoint="http://x/v1", vlm_max_tokens=8192), content=[], post_fn=fake_post
+    )
+    assert seen[1]["max_tokens"] == 8192
